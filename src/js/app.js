@@ -171,7 +171,7 @@ const CAROUSEL_ITEMS = [
     { title: '光学技术前沿研究', desc: '探索激光、光纤传感与光谱分析的最新突破', bg: 'from-blue-600 to-sky-400', icon: 'O', image: '' },
     { title: '电学技术创新', desc: '微电子器件与集成电路设计的创新应用', bg: 'from-indigo-600 to-purple-400', icon: 'E', image: '' },
     { title: '传感技术突破', desc: '高精度传感器与物联网传感网络的研发', bg: 'from-purple-600 to-pink-400', icon: 'S', image: '' },
-    { title: '欢迎加入我们', desc: '实验室常年招收博士生、硕士生及博士后', bg: 'from-emerald-600 to-teal-400', icon: '+', image: '' }
+    { title: '欢迎加入我们', desc: '实验室常年招收博士生、硕士生', bg: 'from-emerald-600 to-teal-400', icon: '+', image: '' }
 ];
 
 let carouselIndex = 0;
