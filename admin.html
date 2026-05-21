@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OES实验室 - 管理后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#2563eb', 'primary-dark': '#1d4ed8' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 登录页 -->
+    <div id="login-page" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+            <h1 class="text-2xl font-bold text-center mb-6">OES 管理后台</h1>
+            <form onsubmit="login(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                    <input id="username" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="admin">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                    <input id="password" type="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="admin">
+                </div>
+                <p id="login-error" class="text-red-500 text-sm hidden">用户名或密码错误</p>
+                <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white py-2 rounded-lg font-medium transition-colors">登录</button>
+            </form>
+            <p class="text-gray-400 text-xs text-center mt-4">默认: admin / admin</p>
+        </div>
+    </div>
+
+    <!-- 管理后台 -->
+    <div id="admin-page" class="hidden">
+        <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-primary">OES 管理后台</h1>
+            <div class="flex items-center gap-4">
+                <a href="index.html" target="_blank" class="text-gray-600 hover:text-primary text-sm">查看网站 →</a>
+                <button onclick="saveData()" id="save-btn" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">保存</button>
+                <button onclick="logout()" class="text-gray-600 hover:text-red-500 text-sm">退出登录</button>
+            </div>
+        </header>
+
+        <div class="flex min-h-[calc(100vh-65px)]">
+            <aside class="w-56 bg-white border-r border-gray-200 p-4">
+                <nav class="space-y-1">
+                    <button onclick="switchTab('directions')" data-tab="directions" class="tab-btn w-full text-left px-4 py-2 rounded-lg font-medium transition-colors">研究方向</button>
+                    <button onclick="switchTab('members')" data-tab="members" class="tab-btn w-full text-left px-4 py-2 rounded-lg font-medium transition-colors">团队成员</button>
+                    <button onclick="switchTab('publications')" data-tab="publications" class="tab-btn w-full text-left px-4 py-2 rounded-lg font-medium transition-colors">发表论文</button>
+                    <button onclick="switchTab('news')" data-tab="news" class="tab-btn w-full text-left px-4 py-2 rounded-lg font-medium transition-colors">新闻管理</button>
+                    <button onclick="switchTab('messages')" data-tab="messages" class="tab-btn w-full text-left px-4 py-2 rounded-lg font-medium transition-colors">留言管理</button>
+                </nav>
+            </aside>
+
+            <main class="flex-1 p-6">
+                <div id="tab-directions" class="tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">研究方向管理</h2>
+                    <div class="flex gap-2">
+                        <button onclick="openDirectionModal()" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">+ 新增方向</button>
+                    </div>
+                </div>
+                    <div id="directions-list" class="space-y-4"></div>
+                </div>
+
+                <div id="tab-members" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">团队成员管理</h2>
+                    <div class="flex gap-2">
+                        <button onclick="openMemberModal()" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">+ 新增成员</button>
+                    </div>
+                </div>
+                    <div id="members-list" class="space-y-4"></div>
+                </div>
+
+                <div id="tab-publications" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">论文管理</h2>
+                    <div class="flex gap-2">
+                        <button onclick="openPubModal()" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">+ 新增论文</button>
+                    </div>
+                </div>
+                    <div id="pubs-list" class="space-y-4"></div>
+                </div>
+
+                <div id="tab-news" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">新闻管理</h2>
+                    <div class="flex gap-2">
+                        <button onclick="openNewsModal()" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">+ 新增新闻</button>
+                    </div>
+                </div>
+                    <div id="news-list" class="space-y-4"></div>
+                </div>
+
+                <div id="tab-messages" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-bold">留言管理</h2>
+                        <button onclick="loadMessages()" class="text-primary text-sm">刷新</button>
+                    </div>
+                    <div id="messages-list" class="space-y-4"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 研究方向弹窗 -->
+    <div id="direction-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 id="direction-modal-title" class="text-lg font-bold">新增研究方向</h3>
+                <button onclick="closeDirectionModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form onsubmit="saveDirection(event)" class="p-6 space-y-4">
+                <input type="hidden" id="dir-id">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">名称</label>
+                    <input id="dir-title" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="如：光学技术 (Optics)">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">图标字母</label>
+                        <input id="dir-icon" type="text" required maxlength="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="O">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">背景色</label>
+                        <select id="dir-bg" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="bg-blue-600">蓝色</option>
+                            <option value="bg-indigo-600">靛蓝</option>
+                            <option value="bg-purple-600">紫色</option>
+                            <option value="bg-green-600">绿色</option>
+                            <option value="bg-red-600">红色</option>
+                            <option value="bg-orange-600">橙色</option>
+                            <option value="bg-teal-600">青色</option>
+                            <option value="bg-pink-600">粉色</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                    <textarea id="dir-desc" rows="3" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="研究方向描述"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">子方向（每行一个）</label>
+                    <textarea id="dir-subitems" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="激光技术&#10;光纤传感&#10;光谱分析"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">排序</label>
+                    <input id="dir-sort" type="number" value="0" class="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-primary hover:bg-primary-dark text-white py-2 rounded-lg font-medium transition-colors">保存</button>
+                    <button type="button" onclick="closeDirectionModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 成员弹窗 -->
+    <div id="member-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 id="member-modal-title" class="text-lg font-bold">新增成员</h3>
+                <button onclick="closeMemberModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form onsubmit="saveMember(event)" class="p-6 space-y-4">
+                <input type="hidden" id="mem-id">
+                <div class="flex items-center gap-4">
+                    <div class="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <img id="mem-photo-preview" src="" alt="" class="w-full h-full object-cover hidden">
+                        <span id="mem-photo-placeholder" class="text-gray-400 text-3xl font-semibold">姓</span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">照片</label>
+                        <input id="mem-photo" type="file" accept="image/*" onchange="handlePhotoUpload(event)" class="text-sm text-gray-500">
+                        <p class="text-xs text-gray-400 mt-1">支持 JPG/PNG，建议 200x200</p>
+                        <button type="button" onclick="removePhoto()" class="text-xs text-red-500 mt-1 hidden" id="mem-photo-remove">删除照片</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+                        <input id="mem-name" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="张教授">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">分类</label>
+                        <select id="mem-category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="教师">教师</option>
+                            <option value="硕士生">硕士生</option>
+                            <option value="本科生">本科生</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">职位</label>
+                    <input id="mem-role" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="实验室主任">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">简介</label>
+                    <textarea id="mem-bio" rows="3" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="研究方向简介"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                        <input id="mem-email" type="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="email@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">电话</label>
+                        <input id="mem-phone" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="0551-63601234">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">个人简历</label>
+                    <textarea id="mem-resume" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="【个人简历】..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">教育经历</label>
+                    <textarea id="mem-education" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="1993-1997 中国科学技术大学..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">工作经历</label>
+                    <textarea id="mem-experience" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="2002-2005 美国斯坦福大学..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">研究方向</label>
+                    <textarea id="mem-research" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="光纤传感技术、激光光谱分析..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">排序</label>
+                        <input id="mem-sort" type="number" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-primary hover:bg-primary-dark text-white py-2 rounded-lg font-medium transition-colors">保存</button>
+                    <button type="button" onclick="closeMemberModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 论文弹窗 -->
+    <div id="pub-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 id="pub-modal-title" class="text-lg font-bold">新增论文</h3>
+                <button onclick="closePubModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form onsubmit="savePub(event)" class="p-6 space-y-4">
+                <input type="hidden" id="pub-id">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                    <input id="pub-title" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="论文标题">
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">作者</label>
+                        <input id="pub-authors" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Zhang, L., et al.">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">期刊</label>
+                        <input id="pub-journal" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Nature Photonics">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">年份</label>
+                        <input id="pub-year" type="number" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="2025">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">卷号</label>
+                        <input id="pub-volume" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="19(3)">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">页码</label>
+                        <input id="pub-pages" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="245-256">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">DOI</label>
+                        <input id="pub-doi" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="10.1038/xxx">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-primary hover:bg-primary-dark text-white py-2 rounded-lg font-medium transition-colors">保存</button>
+                    <button type="button" onclick="closePubModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 新闻弹窗 -->
+    <div id="news-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 id="news-modal-title" class="text-lg font-bold">新增新闻</h3>
+                <button onclick="closeNewsModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form onsubmit="saveNews(event)" class="p-6 space-y-4">
+                <input type="hidden" id="news-id">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                    <input id="news-title" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="新闻标题">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">日期</label>
+                        <input id="news-date" type="date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">分类</label>
+                        <select id="news-category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="学术交流">学术交流</option>
+                            <option value="科研动态">科研动态</option>
+                            <option value="合作交流">合作交流</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">内容</label>
+                    <textarea id="news-content" rows="4" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="新闻内容"></textarea>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-primary hover:bg-primary-dark text-white py-2 rounded-lg font-medium transition-colors">保存</button>
+                    <button type="button" onclick="closeNewsModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let data = { directions: [], members: [], publications: [], news: [], messages: [] };
+
+        // ===== 数据加载 =====
+        async function loadData() {
+            try {
+                const res = await fetch('/api/load');
+                data = await res.json();
+            } catch (e) {
+                console.error('Failed to load data', e);
+            }
+        }
+
+        async function saveData() {
+            const btn = document.getElementById('save-btn');
+            btn.textContent = '保存中...';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    btn.textContent = '保存成功';
+                    setTimeout(() => { btn.textContent = '保存'; btn.disabled = false; }, 1500);
+                } else {
+                    alert('保存失败: ' + result.error);
+                    btn.textContent = '保存';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert('保存失败: ' + e.message);
+                btn.textContent = '保存';
+                btn.disabled = false;
+            }
+        }
+
+        function getNextId(arr) {
+            return arr.length > 0 ? Math.max(...arr.map(i => i.id)) + 1 : 1;
+        }
+
+        // ===== 登录 =====
+        function login(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if (u === 'admin' && p === 'admin') {
+                localStorage.setItem('oes_admin', 'true');
+                showAdmin();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('oes_admin');
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('admin-page').classList.add('hidden');
+        }
+
+        async function showAdmin() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('admin-page').classList.remove('hidden');
+            await loadData();
+            switchTab('directions');
+        }
+
+        if (localStorage.getItem('oes_admin') === 'true') showAdmin();
+
+        // ===== 标签切换 =====
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-primary', 'text-white');
+                el.classList.add('text-gray-600', 'hover:bg-gray-100');
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            const btn = document.querySelector(`[data-tab="${tab}"]`);
+            btn.classList.add('bg-primary', 'text-white');
+            btn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+
+            if (tab === 'directions') loadDirections();
+            if (tab === 'members') loadMembers();
+            if (tab === 'publications') loadPublications();
+            if (tab === 'news') loadNews();
+            if (tab === 'messages') loadMessages();
+        }
+
+        // ===== 研究方向 =====
+        function loadDirections() {
+            const list = document.getElementById('directions-list');
+            list.innerHTML = data.directions.map(d => {
+                const items = d.subItems || [];
+                return `
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start gap-4">
+                            <div class="w-14 h-14 ${d.bgColor} rounded-xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">${d.icon}</div>
+                            <div>
+                                <h3 class="text-lg font-bold">${d.title}</h3>
+                                <p class="text-gray-600 mt-1">${d.description}</p>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    ${items.map(i => `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">${i}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 flex-shrink-0">
+                            <button onclick='editDirection(${d.id})' class="text-primary hover:text-primary-dark text-sm font-medium">编辑</button>
+                            <button onclick="deleteDirection(${d.id})" class="text-red-500 hover:text-red-700 text-sm font-medium">删除</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function openDirectionModal(id = null) {
+            document.getElementById('direction-modal').classList.remove('hidden');
+            document.getElementById('direction-modal-title').textContent = id ? '编辑研究方向' : '新增研究方向';
+            const d = id ? data.directions.find(x => x.id === id) : null;
+            document.getElementById('dir-id').value = id || '';
+            document.getElementById('dir-title').value = d ? d.title : '';
+            document.getElementById('dir-icon').value = d ? d.icon : '';
+            document.getElementById('dir-bg').value = d ? d.bgColor : 'bg-blue-600';
+            document.getElementById('dir-desc').value = d ? d.description : '';
+            document.getElementById('dir-subitems').value = d ? (d.subItems || []).join('\n') : '';
+            document.getElementById('dir-sort').value = d ? d.sortOrder : 0;
+        }
+
+        function closeDirectionModal() { document.getElementById('direction-modal').classList.add('hidden'); }
+        function editDirection(id) { openDirectionModal(id); }
+
+        function saveDirection(e) {
+            e.preventDefault();
+            const id = document.getElementById('dir-id').value;
+            const obj = {
+                title: document.getElementById('dir-title').value,
+                icon: document.getElementById('dir-icon').value,
+                bgColor: document.getElementById('dir-bg').value,
+                description: document.getElementById('dir-desc').value,
+                subItems: document.getElementById('dir-subitems').value.split('\n').filter(s => s.trim()),
+                sortOrder: parseInt(document.getElementById('dir-sort').value)
+            };
+            if (id) {
+                const idx = data.directions.findIndex(d => d.id === parseInt(id));
+                data.directions[idx] = { ...data.directions[idx], ...obj };
+            } else {
+                obj.id = getNextId(data.directions);
+                data.directions.push(obj);
+            }
+            closeDirectionModal();
+            loadDirections();
+        }
+
+        function deleteDirection(id) {
+            if (!confirm('确定删除此研究方向？')) return;
+            data.directions = data.directions.filter(d => d.id !== id);
+            loadDirections();
+        }
+
+        // ===== 团队成员 =====
+        function loadMembers() {
+            const catColors = { '教师': 'bg-blue-100 text-blue-700', '硕士生': 'bg-green-100 text-green-700', '本科生': 'bg-orange-100 text-orange-700' };
+            document.getElementById('members-list').innerHTML = data.members.map(m => `
+                <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        ${m.photo ? `<img src="${m.photo}" alt="${m.name}" class="w-12 h-12 rounded-full object-cover flex-shrink-0">` : `<div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">${m.name.charAt(0)}</div>`}
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold">${m.name}</h3>
+                                <span class="${catColors[m.category] || 'bg-gray-100 text-gray-600'} text-xs px-2 py-0.5 rounded">${m.category}</span>
+                            </div>
+                            <p class="text-primary text-sm">${m.role}</p>
+                            <p class="text-gray-500 text-sm">${m.bio}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick='editMember(${m.id})' class="text-primary hover:text-primary-dark text-sm font-medium">编辑</button>
+                        <button onclick="deleteMember(${m.id})" class="text-red-500 hover:text-red-700 text-sm font-medium">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openMemberModal(id = null) {
+            document.getElementById('member-modal').classList.remove('hidden');
+            document.getElementById('member-modal-title').textContent = id ? '编辑成员' : '新增成员';
+            const m = id ? data.members.find(x => x.id === id) : null;
+            document.getElementById('mem-id').value = id || '';
+            document.getElementById('mem-name').value = m ? m.name : '';
+            document.getElementById('mem-name').dispatchEvent(new Event('input'));
+            document.getElementById('mem-role').value = m ? m.role : '';
+            document.getElementById('mem-bio').value = m ? m.bio : '';
+            document.getElementById('mem-email').value = m ? m.email || '' : '';
+            document.getElementById('mem-phone').value = m ? m.phone || '' : '';
+            document.getElementById('mem-category').value = m ? m.category : '教师';
+            document.getElementById('mem-sort').value = m ? m.sortOrder : 0;
+            document.getElementById('mem-resume').value = m ? m.resume || '' : '';
+            document.getElementById('mem-education').value = m ? m.education || '' : '';
+            document.getElementById('mem-experience').value = m ? m.experience || '' : '';
+            document.getElementById('mem-research').value = m ? m.research || '' : '';
+            if (m && m.photo) {
+                document.getElementById('mem-photo-preview').src = m.photo;
+                document.getElementById('mem-photo-preview').classList.remove('hidden');
+                document.getElementById('mem-photo-placeholder').classList.add('hidden');
+                document.getElementById('mem-photo-remove').classList.remove('hidden');
+            } else {
+                document.getElementById('mem-photo-preview').classList.add('hidden');
+                document.getElementById('mem-photo-placeholder').classList.remove('hidden');
+                document.getElementById('mem-photo-remove').classList.add('hidden');
+                document.getElementById('mem-photo').value = '';
+            }
+        }
+
+        function closeMemberModal() { document.getElementById('member-modal').classList.add('hidden'); }
+        function editMember(id) { openMemberModal(id); }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('照片大小不能超过 2MB');
+                event.target.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('mem-photo-preview').src = e.target.result;
+                document.getElementById('mem-photo-preview').classList.remove('hidden');
+                document.getElementById('mem-photo-placeholder').classList.add('hidden');
+                document.getElementById('mem-photo-remove').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removePhoto() {
+            document.getElementById('mem-photo-preview').src = '';
+            document.getElementById('mem-photo-preview').classList.add('hidden');
+            document.getElementById('mem-photo-placeholder').classList.remove('hidden');
+            document.getElementById('mem-photo-remove').classList.add('hidden');
+            document.getElementById('mem-photo').value = '';
+        }
+
+        function saveMember(e) {
+            e.preventDefault();
+            const id = document.getElementById('mem-id').value;
+            const photoSrc = document.getElementById('mem-photo-preview').classList.contains('hidden') ? '' : document.getElementById('mem-photo-preview').src;
+            const obj = {
+                name: document.getElementById('mem-name').value,
+                role: document.getElementById('mem-role').value,
+                bio: document.getElementById('mem-bio').value,
+                email: document.getElementById('mem-email').value,
+                phone: document.getElementById('mem-phone').value,
+                category: document.getElementById('mem-category').value,
+                photo: photoSrc,
+                sortOrder: parseInt(document.getElementById('mem-sort').value),
+                resume: document.getElementById('mem-resume').value,
+                education: document.getElementById('mem-education').value,
+                experience: document.getElementById('mem-experience').value,
+                research: document.getElementById('mem-research').value
+            };
+            if (id) {
+                const idx = data.members.findIndex(m => m.id === parseInt(id));
+                data.members[idx] = { ...data.members[idx], ...obj };
+            } else {
+                obj.id = getNextId(data.members);
+                data.members.push(obj);
+            }
+            closeMemberModal();
+            loadMembers();
+        }
+
+        function deleteMember(id) {
+            if (!confirm('确定删除此成员？')) return;
+            data.members = data.members.filter(m => m.id !== id);
+            loadMembers();
+        }
+
+        // ===== 论文 =====
+        function loadPublications() {
+            document.getElementById('pubs-list').innerHTML = data.publications.map(p => `
+                <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-start justify-between">
+                    <div class="flex gap-3">
+                        <span class="bg-primary text-white px-2 py-1 rounded text-sm font-semibold h-fit">${p.year}</span>
+                        <div>
+                            <h3 class="font-bold">${p.title}</h3>
+                            <p class="text-gray-500 text-sm mt-1">${p.authors}</p>
+                            <p class="text-primary text-sm font-medium">${p.journal}</p>
+                            ${p.doi ? `<p class="text-gray-400 text-xs mt-1">DOI: ${p.doi}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0">
+                        <button onclick='editPub(${p.id})' class="text-primary hover:text-primary-dark text-sm font-medium">编辑</button>
+                        <button onclick="deletePub(${p.id})" class="text-red-500 hover:text-red-700 text-sm font-medium">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openPubModal(id = null) {
+            document.getElementById('pub-modal').classList.remove('hidden');
+            document.getElementById('pub-modal-title').textContent = id ? '编辑论文' : '新增论文';
+            const p = id ? data.publications.find(x => x.id === id) : null;
+            document.getElementById('pub-id').value = id || '';
+            document.getElementById('pub-title').value = p ? p.title : '';
+            document.getElementById('pub-authors').value = p ? p.authors : '';
+            document.getElementById('pub-journal').value = p ? p.journal : '';
+            document.getElementById('pub-year').value = p ? p.year : new Date().getFullYear();
+            document.getElementById('pub-volume').value = p ? p.volume || '' : '';
+            document.getElementById('pub-pages').value = p ? p.pages || '' : '';
+            document.getElementById('pub-doi').value = p ? p.doi || '' : '';
+        }
+
+        function closePubModal() { document.getElementById('pub-modal').classList.add('hidden'); }
+        function editPub(id) { openPubModal(id); }
+
+        function savePub(e) {
+            e.preventDefault();
+            const id = document.getElementById('pub-id').value;
+            const obj = {
+                title: document.getElementById('pub-title').value,
+                authors: document.getElementById('pub-authors').value,
+                journal: document.getElementById('pub-journal').value,
+                year: parseInt(document.getElementById('pub-year').value),
+                volume: document.getElementById('pub-volume').value,
+                pages: document.getElementById('pub-pages').value,
+                doi: document.getElementById('pub-doi').value
+            };
+            if (id) {
+                const idx = data.publications.findIndex(p => p.id === parseInt(id));
+                data.publications[idx] = { ...data.publications[idx], ...obj };
+            } else {
+                obj.id = getNextId(data.publications);
+                data.publications.push(obj);
+            }
+            closePubModal();
+            loadPublications();
+        }
+
+        function deletePub(id) {
+            if (!confirm('确定删除此论文？')) return;
+            data.publications = data.publications.filter(p => p.id !== id);
+            loadPublications();
+        }
+
+        // ===== 新闻 =====
+        function loadNews() {
+            const colors = { '学术交流': 'bg-blue-100 text-blue-700', '科研动态': 'bg-green-100 text-green-700', '合作交流': 'bg-purple-100 text-purple-700', '其他': 'bg-gray-100 text-gray-700' };
+            document.getElementById('news-list').innerHTML = data.news.map(n => `
+                <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-start justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="${colors[n.category] || colors['其他']} text-xs px-2 py-0.5 rounded font-medium">${n.category}</span>
+                            <span class="text-gray-400 text-sm">${n.date}</span>
+                        </div>
+                        <h3 class="font-bold">${n.title}</h3>
+                        <p class="text-gray-500 text-sm mt-1">${n.content}</p>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0">
+                        <button onclick='editNews(${n.id})' class="text-primary hover:text-primary-dark text-sm font-medium">编辑</button>
+                        <button onclick="deleteNews(${n.id})" class="text-red-500 hover:text-red-700 text-sm font-medium">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openNewsModal(id = null) {
+            document.getElementById('news-modal').classList.remove('hidden');
+            document.getElementById('news-modal-title').textContent = id ? '编辑新闻' : '新增新闻';
+            const n = id ? data.news.find(x => x.id === id) : null;
+            document.getElementById('news-id').value = id || '';
+            document.getElementById('news-title').value = n ? n.title : '';
+            document.getElementById('news-date').value = n ? n.date : new Date().toISOString().split('T')[0];
+            document.getElementById('news-category').value = n ? n.category : '学术交流';
+            document.getElementById('news-content').value = n ? n.content : '';
+        }
+
+        function closeNewsModal() { document.getElementById('news-modal').classList.add('hidden'); }
+        function editNews(id) { openNewsModal(id); }
+
+        function saveNews(e) {
+            e.preventDefault();
+            const id = document.getElementById('news-id').value;
+            const obj = {
+                title: document.getElementById('news-title').value,
+                date: document.getElementById('news-date').value,
+                category: document.getElementById('news-category').value,
+                content: document.getElementById('news-content').value
+            };
+            if (id) {
+                const idx = data.news.findIndex(n => n.id === parseInt(id));
+                data.news[idx] = { ...data.news[idx], ...obj };
+            } else {
+                obj.id = getNextId(data.news);
+                data.news.push(obj);
+            }
+            closeNewsModal();
+            loadNews();
+        }
+
+        function deleteNews(id) {
+            if (!confirm('确定删除此新闻？')) return;
+            data.news = data.news.filter(n => n.id !== id);
+            loadNews();
+        }
+
+        // ===== 留言 =====
+        function loadMessages() {
+            const list = document.getElementById('messages-list');
+            if (data.messages.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-500 py-8">暂无留言</p>';
+                return;
+            }
+            list.innerHTML = data.messages.map(m => `
+                <div class="bg-white rounded-xl border border-gray-200 p-4 ${m.isRead ? 'opacity-60' : ''}">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold">${m.name}</h3>
+                                ${!m.isRead ? '<span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded">新</span>' : ''}
+                            </div>
+                            <p class="text-gray-500 text-sm">${m.email} · ${new Date(m.createdAt).toLocaleString('zh-CN')}</p>
+                            <p class="font-medium mt-1">${m.subject}</p>
+                            <p class="text-gray-600 mt-1">${m.content}</p>
+                        </div>
+                        <div class="flex gap-2 flex-shrink-0">
+                            ${!m.isRead ? `<button onclick="markRead(${m.id})" class="text-green-500 hover:text-green-700 text-sm font-medium">标记已读</button>` : ''}
+                            <button onclick="deleteMessage(${m.id})" class="text-red-500 hover:text-red-700 text-sm font-medium">删除</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function markRead(id) {
+            const msg = data.messages.find(m => m.id === id);
+            if (msg) msg.isRead = true;
+            loadMessages();
+        }
+
+        function deleteMessage(id) {
+            if (!confirm('确定删除此留言？')) return;
+            data.messages = data.messages.filter(m => m.id !== id);
+            loadMessages();
+        }
+
+        // 更新照片占位符首字母
+        document.getElementById('mem-name').addEventListener('input', function() {
+            const initial = this.value.charAt(0) || '姓';
+            document.getElementById('mem-photo-placeholder').textContent = initial;
+        });
+    </script>
+</body>
+</html>

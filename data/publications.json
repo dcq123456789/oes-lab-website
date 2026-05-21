@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "year": 2025,
+    "title": "High-Performance Fiber Optic Sensor Based on Novel Interferometric Structure",
+    "authors": "Zhang, L., Wang, H., Liu, W., et al.",
+    "journal": "Nature Photonics, 19(3), 245-256",
+    "doi": "10.1038/s41566-025-00001"
+  },
+  {
+    "id": 2,
+    "year": 2025,
+    "title": "Low-Power CMOS Integrated Circuit Design for IoT Applications",
+    "authors": "Li, X., Chen, Y., Zhao, K., et al.",
+    "journal": "IEEE Journal of Solid-State Circuits, 60(2), 112-125",
+    "doi": "10.1109/JSSC.2025.00002"
+  },
+  {
+    "id": 3,
+    "year": 2025,
+    "title": "Distributed Acoustic Sensing Using Phase-Sensitive OTDR",
+    "authors": "Zhou, M., Zhang, L., Wu, J., et al.",
+    "journal": "Optics Letters, 50(4), 890-893",
+    "doi": "10.1364/OL.2025.00003"
+  },
+  {
+    "id": 4,
+    "year": 2024,
+    "title": "Multi-Modal Sensing Network for Environmental Monitoring",
+    "authors": "Wang, H., Zhang, L., Sun, R., et al.",
+    "journal": "Sensors and Actuators B: Chemical, 401, 134987",
+    "doi": "10.1016/j.snb.2024.134987"
+  },
+  {
+    "id": 5,
+    "year": 2024,
+    "title": "Advanced Spectral Analysis Techniques for Material Characterization",
+    "authors": "Chen, Y., Li, X., Liu, W., et al.",
+    "journal": "Optics Express, 32(8), 13456-13472",
+    "doi": "10.1364/OE.2024.00005"
+  },
+  {
+    "id": 6,
+    "year": 2024,
+    "title": "Wideband RF Front-End Design for 5G Applications",
+    "authors": "Li, X., Zhao, K., Chen, Y., et al.",
+    "journal": "IEEE Transactions on Microwave Theory and Techniques, 72(1), 456-468",
+    "doi": "10.1109/TMTT.2024.00006"
+  },
+  {
+    "id": 7,
+    "year": 2023,
+    "title": "Graphene-Based Gas Sensor with Ultra-High Sensitivity",
+    "authors": "Sun, R., Wang, H., Zheng, T., et al.",
+    "journal": "ACS Sensors, 8(5), 1890-1898",
+    "doi": "10.1021/acssensors.2023.00007"
+  },
+  {
+    "id": 8,
+    "year": 2023,
+    "title": "Machine Learning Enhanced Optical Signal Processing",
+    "authors": "Zhang, L., Liu, W., Zhou, M., et al.",
+    "journal": "IEEE Photonics Journal, 15(2), 1-12",
+    "doi": "10.1109/JPHOT.2023.00008"
+  },
+  {
+    "id": 9,
+    "year": 2023,
+    "title": "Flexible Strain Sensor Based on Conductive Polymer Nanocomposites",
+    "authors": "Wang, H., Sun, R., et al.",
+    "journal": "Advanced Materials Technologies, 8(3), 2201234",
+    "doi": "10.1002/admt.2023.00009"
+  },
+  {
+    "id": 10,
+    "year": 2022,
+    "title": "Ultra-Low Noise Amplifier Design for Biomedical Applications",
+    "authors": "Li, X., Chen, Y., et al.",
+    "journal": "IEEE Transactions on Biomedical Circuits and Systems, 16(4), 678-689",
+    "doi": "10.1109/TBCAS.2022.00010"
+  }
+]

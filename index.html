@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OES实验室 - 光学·电学·传感</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .dropdown { position: relative; }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            min-width: 160px;
+            padding: 0.5rem 0;
+            z-index: 50;
+        }
+        .dropdown:hover .dropdown-menu { display: block; }
+        .dropdown-menu a {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: #4b5563;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        .dropdown-menu a:hover {
+            background: #f3f4f6;
+            color: #2563eb;
+        }
+        .nav-item {
+            position: relative;
+            padding: 0.5rem 0;
+        }
+        .nav-item > a {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .nav-item:hover > a { color: #2563eb; }
+        .nav-item:hover .dropdown-arrow { transform: rotate(180deg); }
+        .dropdown-arrow { transition: transform 0.2s; }
+    </style>
+</head>
+<body class="min-h-screen bg-white">
+    <nav class="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="#/" class="text-2xl font-bold text-primary">OES<span class="text-gray-800">实验室</span></a>
+                <div class="hidden md:flex space-x-8">
+                    <div class="nav-item">
+                        <a href="#/" class="nav-link text-primary font-medium" data-page="home">首页</a>
+                    </div>
+                    
+                    <div class="nav-item dropdown">
+                        <a href="#/research" class="nav-link text-gray-600 font-medium transition-colors" data-page="research">
+                            研究方向
+                            <svg class="w-4 h-4 dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="#/research" onclick="navigate('#/research')">全部方向</a>
+                            <a href="#/research" onclick="navigate('#/research')">光学技术</a>
+                            <a href="#/research" onclick="navigate('#/research')">电学技术</a>
+                            <a href="#/research" onclick="navigate('#/research')">传感技术</a>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-item dropdown">
+                        <a href="#/member" class="nav-link text-gray-600 font-medium transition-colors" data-page="member">
+                            团队成员
+                            <svg class="w-4 h-4 dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="#/member" onclick="navigate('#/member')">全部成员</a>
+                            <a href="#/member" onclick="filterByCategory('教师')">教师</a>
+                            <a href="#/member" onclick="filterByCategory('硕士生')">硕士生</a>
+                            <a href="#/member" onclick="filterByCategory('本科生')">本科生</a>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-item dropdown">
+                        <a href="#/news" class="nav-link text-gray-600 font-medium transition-colors" data-page="news">
+                            新闻动态
+                            <svg class="w-4 h-4 dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="#/news" onclick="navigate('#/news')">全部新闻</a>
+                            <a href="#/news" onclick="filterNewsByCategory('学术交流')">学术交流</a>
+                            <a href="#/news" onclick="filterNewsByCategory('科研动态')">科研动态</a>
+                            <a href="#/news" onclick="filterNewsByCategory('合作交流')">合作交流</a>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-item">
+                        <a href="#/publications" class="nav-link text-gray-600 font-medium transition-colors" data-page="publications">发表论文</a>
+                    </div>
+                    
+                    <div class="nav-item">
+                        <a href="#/contact" class="nav-link text-gray-600 font-medium transition-colors" data-page="contact">联系我们</a>
+                    </div>
+                </div>
+                <button onclick="toggleMobile()" class="md:hidden p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden py-4 border-t border-gray-200">
+                <a href="#/" onclick="toggleMobile()" class="mobile-link block py-2 text-primary font-medium" data-page="home">首页</a>
+                <a href="#/research" onclick="toggleMobile()" class="mobile-link block py-2 text-gray-600 hover:text-primary font-medium" data-page="research">研究方向</a>
+                <a href="#/member" onclick="toggleMobile()" class="mobile-link block py-2 text-gray-600 hover:text-primary font-medium" data-page="member">团队成员</a>
+                <a href="#/news" onclick="toggleMobile()" class="mobile-link block py-2 text-gray-600 hover:text-primary font-medium" data-page="news">新闻动态</a>
+                <a href="#/publications" onclick="toggleMobile()" class="mobile-link block py-2 text-gray-600 hover:text-primary font-medium" data-page="publications">发表论文</a>
+                <a href="#/contact" onclick="toggleMobile()" class="mobile-link block py-2 text-gray-600 hover:text-primary font-medium" data-page="contact">联系我们</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="home" class="page active">
+        <section class="pt-20 bg-gradient-to-br from-blue-50 to-sky-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div id="carousel" class="relative rounded-2xl overflow-hidden shadow-xl mb-8">
+                    <div id="carousel-track" class="flex transition-transform duration-500 ease-in-out"></div>
+                    <button onclick="carouselPrev()" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all">
+                        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button onclick="carouselNext()" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all">
+                        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                    <div id="carousel-dots" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"></div>
+                </div>
+            </div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pb-20">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"><span class="text-primary">OES</span> 实验室</h1>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-8">聚焦光学、电学与传感技术的前沿研究，致力于推动多学科交叉融合与技术创新</p>
+                <div id="home-tags" class="flex flex-wrap justify-center gap-4"></div>
+                <div class="mt-10">
+                    <a href="#/research" class="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-lg font-medium transition-colors inline-block">了解更多</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-end mb-12">
+                    <div class="text-center flex-1">
+                        <a href="#/research"><h2 class="text-3xl font-bold mb-2 hover:text-primary transition-colors">研究方向</h2></a>
+                        <p class="text-gray-500">核心研究方向，覆盖前沿技术领域</p>
+                    </div>
+                    <a href="#/research" class="text-primary font-medium hover:underline whitespace-nowrap ml-4">查看更多 →</a>
+                </div>
+                <div id="home-research" class="grid md:grid-cols-3 gap-8"></div>
+            </div>
+        </section>
+
+        <section class="py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-end mb-12">
+                    <div class="text-center flex-1">
+                        <a href="#/member"><h2 class="text-3xl font-bold mb-2 hover:text-primary transition-colors">团队成员</h2></a>
+                        <p class="text-gray-500">汇聚优秀科研人才，共同探索科技前沿</p>
+                    </div>
+                    <a href="#/member" class="text-primary font-medium hover:underline whitespace-nowrap ml-4">查看更多 →</a>
+                </div>
+                <div id="home-team" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
+            </div>
+        </section>
+
+        <section class="py-16 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-end mb-12">
+                    <div class="text-center flex-1">
+                        <a href="#/news"><h2 class="text-3xl font-bold mb-2 hover:text-primary transition-colors">新闻动态</h2></a>
+                        <p class="text-gray-500">实验室最新资讯与活动</p>
+                    </div>
+                    <a href="#/news" class="text-primary font-medium hover:underline whitespace-nowrap ml-4">查看更多 →</a>
+                </div>
+                <div id="home-news" class="grid md:grid-cols-3 gap-6"></div>
+            </div>
+        </section>
+
+        <section class="py-16 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-end mb-12">
+                    <div class="text-center flex-1">
+                        <a href="#/publications"><h2 class="text-3xl font-bold mb-2 hover:text-primary transition-colors">最新论文</h2></a>
+                        <p class="text-gray-500">近年代表性学术成果</p>
+                    </div>
+                    <a href="#/publications" class="text-primary font-medium hover:underline whitespace-nowrap ml-4">查看更多 →</a>
+                </div>
+                <div id="home-pubs" class="space-y-4"></div>
+            </div>
+        </section>
+
+        <section class="py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl font-bold mb-4">欢迎交流合作</h2>
+                <p class="text-gray-600 mb-8">如果您对我们的研究感兴趣，欢迎随时联系我们</p>
+                <a href="#/contact" class="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-lg font-medium transition-colors inline-block">联系我们</a>
+            </div>
+        </section>
+    </div>
+
+    <div id="research" class="page">
+        <section class="pt-24 pb-16 bg-gray-50 min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-3xl font-bold text-center mb-2">研究方向</h1>
+                <p class="text-gray-500 text-center mb-12">核心研究方向，覆盖前沿技术领域</p>
+                <div id="research-detail" class="space-y-12"></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="member" class="page">
+        <section class="pt-24 pb-16 min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div id="member-list-view">
+                    <h1 class="text-3xl font-bold text-center mb-2">团队成员</h1>
+                    <p class="text-gray-500 text-center mb-8">汇聚优秀科研人才，共同探索科技前沿</p>
+                    <div class="flex gap-4 mb-8 justify-center">
+                        <button onclick="filterMember()" data-cat="" class="member-filter-btn bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">全部</button>
+                        <button onclick="filterMember()" data-cat="教师" class="member-filter-btn bg-gray-200 text-gray-600 px-4 py-1 rounded-full text-sm font-medium hover:bg-gray-300">教师</button>
+                        <button onclick="filterMember()" data-cat="硕士生" class="member-filter-btn bg-gray-200 text-gray-600 px-4 py-1 rounded-full text-sm font-medium hover:bg-gray-300">硕士生</button>
+                        <button onclick="filterMember()" data-cat="本科生" class="member-filter-btn bg-gray-200 text-gray-600 px-4 py-1 rounded-full text-sm font-medium hover:bg-gray-300">本科生</button>
+                    </div>
+                    <div id="member-detail" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+                    <div id="member-empty" class="hidden text-center py-12">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <p class="text-gray-500">暂无成员</p>
+                    </div>
+                    <div class="mt-16 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 text-center">
+                        <h2 class="text-2xl font-bold mb-4">加入我们</h2>
+                        <p class="text-gray-600 max-w-2xl mx-auto mb-6">实验室常年招收博士生、硕士生。如果你对光学、电学或传感技术感兴趣，欢迎加入我们的团队！</p>
+                        <a href="#/contact" class="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg font-medium transition-colors inline-block">联系咨询</a>
+                    </div>
+                </div>
+                <div id="member-profile-view" class="hidden">
+                    <a href="#/member" class="flex items-center text-primary font-medium hover:underline mb-6 inline-block">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        返回团队列表
+                    </a>
+                    <div id="member-profile-content"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="news" class="page">
+        <section class="pt-24 pb-16 min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div id="news-list-view">
+                    <h1 class="text-3xl font-bold text-center mb-2">新闻动态</h1>
+                    <p class="text-gray-500 text-center mb-12">实验室最新资讯与活动</p>
+                    <div class="flex gap-4 mb-8 justify-center">
+                        <button onclick="filterNews()" data-cat="" class="news-filter-btn bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">全部</button>
+                        <button onclick="filterNews()" data-cat="学术交流" class="news-filter-btn bg-gray-200 text-gray-600 px-4 py-1 rounded-full text-sm font-medium hover:bg-gray-300">学术交流</button>
+                        <button onclick="filterNews()" data-cat="科研动态" class="news-filter-btn bg-gray-200 text-gray-600 px-4 py-1 rounded-full text-sm font-medium hover:bg-gray-300">科研动态</button>
+                        <button onclick="filterNews()" data-cat="合作交流" class="news-filter-btn bg-gray-200 text-gray-600 px-4 py-1 rounded-full text-sm font-medium hover:bg-gray-300">合作交流</button>
+                    </div>
+                    <div id="news-list-page" class="space-y-6"></div>
+                    <div id="news-empty" class="hidden text-center py-12">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+                        <p class="text-gray-500">暂无新闻</p>
+                    </div>
+                </div>
+                <div id="news-detail-view" class="hidden">
+                    <a href="#/news" class="flex items-center text-primary font-medium hover:underline mb-6 inline-block">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        返回新闻列表
+                    </a>
+                    <div id="news-detail-content"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="publications" class="page">
+        <section class="pt-24 pb-16 bg-gray-50 min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-3xl font-bold text-center mb-2">发表论文</h1>
+                <p class="text-gray-500 text-center mb-8">近年代表性学术成果</p>
+                <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                    <div class="flex-1 relative">
+                        <input id="search-input" oninput="filterPubs()" type="text" placeholder="搜索论文标题、作者..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
+                    <select id="year-select" onchange="filterPubs()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        <option value="">全部年份</option>
+                    </select>
+                </div>
+                <div id="pub-list" class="space-y-4"></div>
+                <div id="pub-empty" class="hidden text-center py-12">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <p class="text-gray-500">未找到匹配的论文</p>
+                </div>
+                <div id="pub-stats" class="mt-12 grid grid-cols-3 gap-6 text-center"></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="contact" class="page">
+        <section class="pt-24 pb-16 min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-3xl font-bold text-center mb-2">联系我们</h1>
+                <p class="text-gray-500 text-center mb-12">欢迎交流合作，共同探讨科研前沿</p>
+                <div class="grid lg:grid-cols-2 gap-12">
+                    <div>
+                        <div class="space-y-6">
+                            <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </div>
+                                <div><h3 class="font-semibold mb-1">地址</h3><p class="text-gray-600">湖北工业大学 实训楼 B座 5层508<br>OES实验室</p></div>
+                            </div>
+                            <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                </div>
+                                <div><h3 class="font-semibold mb-1">邮箱</h3><p class="text-gray-600">oes-lab@university.edu.cn</p></div>
+                            </div>
+                            <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
+                                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                </div>
+                                <div><h3 class="font-semibold mb-1">电话</h3><p class="text-gray-600">+86 (010) 1234-5678</p></div>
+                            </div>
+                        </div>
+                        <a href="https://uri.amap.com/marker?position=114.309,30.481&name=湖北工业大学教六楼&callnative=1" target="_blank" class="mt-8 block rounded-xl overflow-hidden h-64 border border-gray-200 bg-gray-100 hover:bg-gray-200 transition-colors group">
+                            <div class="h-full flex flex-col items-center justify-center text-gray-500 group-hover:text-primary">
+                                <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                                <span class="font-medium">点击查看地图位置</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
+                        <h2 class="text-xl font-bold mb-6">在线留言</h2>
+                        <form id="contact-form" onsubmit="submitForm(event)" class="space-y-4">
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">姓名</label><input name="name" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="请输入您的姓名"></div>
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label><input name="email" type="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="请输入您的邮箱"></div>
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">主题</label><input name="subject" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="请输入留言主题"></div>
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">内容</label><textarea name="content" rows="4" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="请输入留言内容"></textarea></div>
+                            <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg font-medium transition-colors">提交留言</button>
+                            <p id="form-success" class="hidden text-green-600 text-center text-sm">留言已提交，我们会尽快回复！</p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-gray-400">&copy; 2026 OES实验室. All rights reserved.</p>
+            <p class="text-gray-500 text-sm mt-2">光学(Optics) · 电学(Electronics) · 传感(Sensing)</p>
+        </div>
+    </footer>
+
+    <script src="./src/js/app.js"></script>
+    <script>
+        const PAGES = {
+            'home': { title: 'OES实验室 - 光学·电学·传感' },
+            'research': { title: 'OES实验室 - 研究方向' },
+            'member': { title: 'OES实验室 - 团队成员' },
+            'news': { title: 'OES实验室 - 新闻动态' },
+            'publications': { title: 'OES实验室 - 发表论文' },
+            'contact': { title: 'OES实验室 - 联系我们' }
+        };
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(pageId);
+            if (target) target.classList.add('active');
+            window.scrollTo(0, 0);
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const linkPage = link.dataset.page;
+                if (linkPage === pageId) {
+                    link.classList.add('text-primary');
+                    link.classList.remove('text-gray-600');
+                } else {
+                    link.classList.remove('text-primary');
+                    link.classList.add('text-gray-600');
+                }
+            });
+        }
+
+        function navigate(hash) {
+            const path = hash.replace('#/', '').replace('#', '') || 'home';
+            const parts = path.split('/');
+
+            if (parts[0] === 'member') {
+                if (parts[1]) {
+                    const id = parseInt(parts[1]);
+                    showPage('member');
+                    showMemberProfile(id);
+                    const members = getData('members');
+                    const m = members.find(x => x.id === id);
+                    document.title = m ? `OES实验室 - ${m.name}` : PAGES['member'].title;
+                } else {
+                    showPage('member');
+                    showMemberList();
+                    document.title = PAGES['member'].title;
+                }
+            } else if (parts[0] === 'news') {
+                if (parts[1]) {
+                    const id = parseInt(parts[1]);
+                    showPage('news');
+                    showNewsDetail(id);
+                    const news = getData('news');
+                    const n = news.find(x => x.id === id);
+                    document.title = n ? `OES实验室 - ${n.title}` : PAGES['news'].title;
+                } else {
+                    showPage('news');
+                    showNewsList();
+                    document.title = PAGES['news'].title;
+                }
+            } else if (PAGES[parts[0]]) {
+                showPage(parts[0]);
+                showMemberList();
+                showNewsList();
+                document.title = PAGES[parts[0]].title;
+            } else {
+                showPage('home');
+                document.title = PAGES['home'].title;
+            }
+        }
+
+        function toggleMobile() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+
+        function filterByCategory(cat) {
+            currentMemberFilter = cat;
+            showPage('member');
+            showMemberList();
+            renderMemberList();
+            document.querySelectorAll('.member-filter-btn').forEach(btn => {
+                btn.className = `member-filter-btn px-4 py-1 rounded-full text-sm font-medium transition-colors ${btn.dataset.cat === cat ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
+            });
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        function filterNewsByCategory(cat) {
+            currentNewsFilter = cat;
+            showPage('news');
+            showNewsList();
+            renderNewsPage();
+            document.querySelectorAll('.news-filter-btn').forEach(btn => {
+                btn.className = `news-filter-btn px-4 py-1 rounded-full text-sm font-medium transition-colors ${btn.dataset.cat === cat ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
+            });
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        function showTeamList() {
+            const view = document.getElementById('team-list-view');
+            if (view) {
+                view.classList.remove('hidden');
+                document.getElementById('member-detail-view').classList.add('hidden');
+            }
+        }
+
+        function showMemberDetail(id) {
+            renderMemberPage(id);
+            document.getElementById('team-list-view').classList.add('hidden');
+            document.getElementById('member-detail-view').classList.remove('hidden');
+        }
+
+        window.addEventListener('hashchange', () => navigate(window.location.hash));
+
+        renderCarousel();
+        renderHomeTags();
+        renderHomeResearch();
+        renderHomeTeam();
+        renderHomeNews();
+        renderHomePubs();
+        renderResearchDetail();
+        renderMemberList();
+        renderNewsPage();
+        populateYearFilter();
+        renderPubList();
+        renderStats();
+
+        navigate(window.location.hash || '#/');
+    </script>
+</body>
+</html>
