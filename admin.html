@@ -635,6 +635,15 @@
             document.getElementById('carousel-image-url').value = '';
         }
 
+        function toRelPath(url) {
+            if (!url) return '';
+            try {
+                const u = new URL(url, location.origin);
+                if (u.origin === location.origin) return u.pathname.replace(/^\//, '');
+                return url;
+            } catch { return url; }
+        }
+
         function saveCarousel(e) {
             e.preventDefault();
             const id = document.getElementById('carousel-id').value;
@@ -645,7 +654,7 @@
                 desc: document.getElementById('carousel-desc').value,
                 icon: document.getElementById('carousel-icon').value || '',
                 bg: document.getElementById('carousel-bg').value,
-                image: hasImage ? preview.src : '',
+                image: hasImage ? toRelPath(preview.src) : '',
                 sortOrder: parseInt(document.getElementById('carousel-sort').value)
             };
             if (id) {
@@ -785,7 +794,7 @@
                 title: document.getElementById('dir-title').value,
                 icon: document.getElementById('dir-icon').value || '',
                 bgColor: document.getElementById('dir-bg').value,
-                image: hasImage ? preview.src : '',
+                image: hasImage ? toRelPath(preview.src) : '',
                 description: document.getElementById('dir-desc').value,
                 subItems: document.getElementById('dir-subitems').value.split('\n').filter(s => s.trim()),
                 sortOrder: parseInt(document.getElementById('dir-sort').value)
@@ -920,7 +929,8 @@
         function saveMember(e) {
             e.preventDefault();
             const id = document.getElementById('mem-id').value;
-            const photoSrc = document.getElementById('mem-photo-preview').classList.contains('hidden') ? '' : document.getElementById('mem-photo-preview').src;
+            const preview = document.getElementById('mem-photo-preview');
+            const photoSrc = preview.classList.contains('hidden') ? '' : toRelPath(preview.src);
             const obj = {
                 name: document.getElementById('mem-name').value,
                 role: document.getElementById('mem-role').value,
