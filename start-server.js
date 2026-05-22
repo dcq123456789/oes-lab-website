@@ -48,6 +48,33 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // API: Login
+    if (req.url === '/api/login' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const { username, password } = JSON.parse(body);
+                const configPath = path.join(__dirname, 'config', 'admin.json');
+                let config = { username: 'admin', password: 'admin' };
+                if (fs.existsSync(configPath)) {
+                    config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                }
+                if (username === config.username && password === config.password) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: true }));
+                } else {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: false }));
+                }
+            } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+        });
+        return;
+    }
+
     // API: Upload image
     if (req.url === '/api/upload' && req.method === 'POST') {
         let body = '';
