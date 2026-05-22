@@ -51,11 +51,11 @@ node start-server.js
 
 服务器启动后，访问以下地址：
 *   **前台展示**: http://localhost:8080
-*   **后台管理**: http://localhost:8080/admin.html (默认账号/密码: `admin` / `admin`)
+*   **后台管理**: http://localhost:8080/admin.html (默认账号密码见 `config/admin.json`)
 
 ## 🛠 后台管理说明
 
-1.  **登录**: 访问 `/admin.html`，使用默认账号密码登录。
+1.  **登录**: 访问 `/admin.html`，使用 `config/admin.json` 中的账号密码登录。
 2.  **修改数据**: 在对应的标签页（如团队成员、新闻）进行编辑。
 3.  **保存**: 点击右上角的 **"保存"** 按钮。数据将直接写入本地的 `data/` 目录下的 JSON 文件中。
 4.  **生效**: 刷新前台页面即可看到更新后的内容。
