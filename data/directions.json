@@ -13,7 +13,7 @@
       "新型光学器件设计"
     ],
     "sortOrder": 0,
-    "image": "http://localhost:8080/image/1779430365422.png"
+    "image": "image/1779430689485.png"
   },
   {
     "id": 2,
@@ -29,7 +29,7 @@
       "电磁兼容分析"
     ],
     "sortOrder": 1,
-    "image": "http://localhost:8080/image/1779430359349.png"
+    "image": "image/1779430698122.png"
   },
   {
     "id": 3,
@@ -45,6 +45,6 @@
       "环境监测应用"
     ],
     "sortOrder": 2,
-    "image": "http://localhost:8080/image/1779430399054.png"
+    "image": "image/1779430704378.png"
   }
 ]
