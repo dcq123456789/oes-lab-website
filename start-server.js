@@ -157,22 +157,38 @@ const server = http.createServer((req, res) => {
                 const { message } = JSON.parse(body);
                 const exec = require('child_process').exec;
                 const repoDir = __dirname;
-                const msg = message || 'update data via admin';
-                exec(`git add -A && git commit -m "${msg.replace(/"/g, '\\"')}" && git push`, { cwd: repoDir }, (err, stdout, stderr) => {
-                    if (err) {
-                        const detail = (stderr || err.message).substring(0, 500);
-                        if (detail.includes('nothing to commit') || detail.includes('up-to-date')) {
-                            res.writeHead(200, { 'Content-Type': 'application/json' });
-                            res.end(JSON.stringify({ success: true, output: '没有新变更需要推送' }));
-                        } else {
-                            res.writeHead(200, { 'Content-Type': 'application/json' });
-                            res.end(JSON.stringify({ success: false, error: detail }));
+                const msg = (message || 'update data via admin').replace(/"/g, '\\"');
+                const logs = [];
+
+                function run(cmd, cb) {
+                    exec(cmd, { cwd: repoDir }, (err, stdout, stderr) => {
+                        const out = (stdout || '').trim();
+                        const errOut = (stderr || '').trim();
+                        if (out) logs.push(out);
+                        if (errOut && !err) logs.push(errOut);
+                        cb(err, errOut);
+                    });
+                }
+
+                run(`git add -A`, (err1, e1) => {
+                    if (err1) { res.end(JSON.stringify({ success: false, error: e1 || 'git add failed' })); return; }
+                    run(`git commit -m "${msg}"`, (err2, e2) => {
+                        if (err2) {
+                            if (e2.includes('nothing to commit')) {
+                                res.end(JSON.stringify({ success: true, output: '没有新变更需要推送' }));
+                            } else {
+                                res.end(JSON.stringify({ success: false, error: e2 || 'git commit failed' }));
+                            }
+                            return;
                         }
-                    } else {
-                        const out = (stdout || '').substring(0, 500);
-                        res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ success: true, output: out }));
-                    }
+                        run(`git push`, (err3, e3) => {
+                            if (err3) {
+                                res.end(JSON.stringify({ success: false, error: e3 || 'git push failed' }));
+                            } else {
+                                res.end(JSON.stringify({ success: true, output: logs.join('\n') }));
+                            }
+                        });
+                    });
                 });
             } catch (err) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
