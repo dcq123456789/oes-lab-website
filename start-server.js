@@ -119,6 +119,40 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // API: Git push to GitHub
+    if (req.url === '/api/git-push' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const { message } = JSON.parse(body);
+                const exec = require('child_process').exec;
+                const repoDir = __dirname;
+                const msg = message || 'update data via admin';
+                exec(`git add -A && git commit -m "${msg.replace(/"/g, '\\"')}" && git push`, { cwd: repoDir }, (err, stdout, stderr) => {
+                    if (err) {
+                        const detail = (stderr || err.message).substring(0, 500);
+                        if (detail.includes('nothing to commit') || detail.includes('up-to-date')) {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ success: true, output: '没有新变更需要推送' }));
+                        } else {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ success: false, error: detail }));
+                        }
+                    } else {
+                        const out = (stdout || '').substring(0, 500);
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ success: true, output: out }));
+                    }
+                });
+            } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+        });
+        return;
+    }
+
     let filePath = '.' + req.url;
     if (filePath === './') filePath = './index.html';
 

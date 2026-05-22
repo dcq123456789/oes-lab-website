@@ -39,6 +39,7 @@
             <div class="flex items-center gap-4">
                 <a href="index.html" target="_blank" class="text-gray-600 hover:text-primary text-sm">查看网站 →</a>
                 <button onclick="saveData()" id="save-btn" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">保存</button>
+                <button onclick="gitPush()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">推送至 GitHub</button>
                 <button onclick="logout()" class="text-gray-600 hover:text-red-500 text-sm">退出登录</button>
             </div>
         </header>
@@ -474,6 +475,34 @@
                 btn.textContent = '保存';
                 btn.disabled = false;
             }
+        }
+
+        async function gitPush() {
+            const msg = prompt('请输入提交信息（留空使用默认）:', 'update data via admin');
+            if (msg === null) return;
+            const btn = event.target;
+            const orig = btn.textContent;
+            btn.textContent = '推送中...';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/git-push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg || 'update data via admin' })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    btn.textContent = '推送成功';
+                    alert('已推送到 GitHub！\n' + (result.output || ''));
+                } else {
+                    alert('推送失败:\n' + result.error);
+                    btn.textContent = '推送失败';
+                }
+            } catch (e) {
+                alert('推送失败: ' + e.message);
+                btn.textContent = orig;
+            }
+            setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
         }
 
         function getNextId(arr) {
