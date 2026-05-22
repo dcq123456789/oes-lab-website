@@ -6,6 +6,7 @@
     "bg": "from-blue-600 to-sky-400",
     "icon": "O",
     "image": "",
+    "link": "#research",
     "sortOrder": 0
   },
   {
@@ -15,6 +16,7 @@
     "bg": "from-indigo-600 to-purple-400",
     "icon": "E",
     "image": "",
+    "link": "",
     "sortOrder": 1
   },
   {
@@ -24,6 +26,7 @@
     "bg": "from-purple-600 to-pink-400",
     "icon": "S",
     "image": "",
+    "link": "",
     "sortOrder": 2
   },
   {
@@ -33,6 +36,7 @@
     "bg": "from-emerald-600 to-teal-400",
     "icon": "+",
     "image": "image/1779430715615.jpg",
+    "link": "#contact",
     "sortOrder": 3
   }
 ]

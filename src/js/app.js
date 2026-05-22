@@ -185,9 +185,12 @@ function renderCarousel() {
         const bgClass = item.image ? '' : `bg-gradient-to-r ${item.bg}`;
         const overlay = item.image ? '<div class="absolute inset-0 bg-black/40"></div>' : '';
 
+        const linkStart = item.link ? `<a href="${item.link}">` : '';
+        const linkEnd = item.link ? '</a>' : '';
         return `
     <div class="w-full flex-shrink-0 relative">
-      <div class="${bgClass} h-64 md:h-80 flex items-center justify-center text-white relative overflow-hidden" style="${style}">
+      ${linkStart}
+      <div class="${bgClass} h-64 md:h-80 flex items-center justify-center text-white relative overflow-hidden ${item.link ? 'cursor-pointer hover:brightness-110 transition-all' : ''}" style="${style}">
         ${overlay}
         <div class="text-center px-8 relative z-10">
           <div class="w-20 h-20 mx-auto rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-5xl font-bold mb-6">${item.icon}</div>
@@ -195,6 +198,7 @@ function renderCarousel() {
           <p class="text-lg md:text-xl opacity-90 drop-shadow-md">${item.desc}</p>
         </div>
       </div>
+      ${linkEnd}
     </div>
   `;
     }).join('');

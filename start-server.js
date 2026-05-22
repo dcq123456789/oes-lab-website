@@ -58,7 +58,9 @@ const server = http.createServer((req, res) => {
                 const configPath = path.join(__dirname, 'config', 'admin.json');
                 let config = { username: 'admin', password: 'admin' };
                 if (fs.existsSync(configPath)) {
-                    config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                    let raw = fs.readFileSync(configPath, 'utf-8');
+                    if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+                    config = JSON.parse(raw);
                 }
                 if (username === config.username && password === config.password) {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
