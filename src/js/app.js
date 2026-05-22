@@ -2,7 +2,7 @@
 let DATA = {};
 
 async function loadData() {
-    const files = ['directions', 'members', 'publications', 'news'];
+    const files = ['directions', 'members', 'publications', 'news', 'carousel'];
     const promises = files.map(async (file) => {
         try {
             const res = await fetch(`./data/${file}.json`);
@@ -158,21 +158,18 @@ function showNewsDetail(id) {
 }
 
 // ===== 头像渲染 =====
-function renderAvatar(m, size = 'w-20 h-20') {
+function renderAvatar(m, size = 'w-24 h-24') {
     if (m.photo) {
         return `<img src="${m.photo}" alt="${m.name}" class="${size} mx-auto rounded-full object-cover mb-3">`;
     }
-    const s = size.includes('24') ? 'text-3xl' : size.includes('20') ? 'text-2xl' : 'text-lg';
+    const s = size.includes('28') ? 'text-4xl' : size.includes('24') ? 'text-3xl' : size.includes('20') ? 'text-2xl' : 'text-lg';
     return `<div class="${size} mx-auto rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white ${s} font-semibold mb-3">${m.name.charAt(0)}</div>`;
 }
 
 // ===== 轮播图 =====
-const CAROUSEL_ITEMS = [
-    { title: '光学技术前沿研究', desc: '探索激光、光纤传感与光谱分析的最新突破', bg: 'from-blue-600 to-sky-400', icon: 'O', image: '' },
-    { title: '电学技术创新', desc: '微电子器件与集成电路设计的创新应用', bg: 'from-indigo-600 to-purple-400', icon: 'E', image: '' },
-    { title: '传感技术突破', desc: '高精度传感器与物联网传感网络的研发', bg: 'from-purple-600 to-pink-400', icon: 'S', image: '' },
-    { title: '欢迎加入我们', desc: '实验室常年招收博士生、硕士生', bg: 'from-emerald-600 to-teal-400', icon: '+', image: '' }
-];
+function getCarouselItems() {
+    return getData('carousel').sort((a, b) => a.sortOrder - b.sortOrder);
+}
 
 let carouselIndex = 0;
 let carouselTimer;
@@ -182,7 +179,8 @@ function renderCarousel() {
     const dots = document.getElementById('carousel-dots');
     if (!track) return;
 
-    track.innerHTML = CAROUSEL_ITEMS.map(item => {
+    const items = getCarouselItems();
+    track.innerHTML = items.map(item => {
         const style = item.image ? `background-image: url('${item.image}'); background-size: cover; background-position: center;` : '';
         const bgClass = item.image ? '' : `bg-gradient-to-r ${item.bg}`;
         const overlay = item.image ? '<div class="absolute inset-0 bg-black/40"></div>' : '';
@@ -201,7 +199,7 @@ function renderCarousel() {
   `;
     }).join('');
 
-    dots.innerHTML = CAROUSEL_ITEMS.map((_, i) => `
+    dots.innerHTML = items.map((_, i) => `
     <button onclick="carouselGo(${i})" class="w-3 h-3 rounded-full transition-all ${i === 0 ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}"></button>
   `).join('');
 
@@ -220,11 +218,11 @@ function carouselGo(index) {
 }
 
 function carouselPrev() {
-    carouselGo((carouselIndex - 1 + CAROUSEL_ITEMS.length) % CAROUSEL_ITEMS.length);
+    carouselGo((carouselIndex - 1 + getCarouselItems().length) % getCarouselItems().length);
 }
 
 function carouselNext() {
-    carouselGo((carouselIndex + 1) % CAROUSEL_ITEMS.length);
+    carouselGo((carouselIndex + 1) % getCarouselItems().length);
 }
 
 function startCarousel() {
@@ -251,13 +249,18 @@ function renderHomeResearch() {
     const directions = getData('directions');
     const container = document.getElementById('home-research');
     if (!container) return;
-    container.innerHTML = directions.map(d => `
+    container.innerHTML = directions.map(d => {
+        const imgStyle = d.image ? `background-image: url('${d.image}'); background-size: cover; background-position: center;` : '';
+        const iconHtml = d.image
+            ? `<div class="w-20 h-20 rounded-xl mb-4" style="${imgStyle}"></div>`
+            : `<div class="w-20 h-20 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-bold mb-4">${d.icon}</div>`;
+        return `
     <a href="#/research" class="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all block">
-      <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white text-xl font-bold mb-4">${d.icon}</div>
+      ${iconHtml}
       <h3 class="text-xl font-semibold mb-2">${d.title.replace(/\s*\(.*\)/, '')}</h3>
       <p class="text-gray-600">${d.description}</p>
-    </a>
-  `).join('');
+    </a>`;
+    }).join('');
 }
 
 function renderResearchDetail() {
@@ -266,11 +269,15 @@ function renderResearchDetail() {
     if (!container) return;
     container.innerHTML = directions.map(d => {
         const items = d.subItems || [];
+        const imgStyle = d.image ? `background-image: url('${d.image}'); background-size: cover; background-position: center;` : '';
+        const iconHtml = d.image
+            ? `<div class="w-40 h-40 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white text-6xl font-bold" style="${imgStyle}"></div>`
+            : `<div class="w-40 h-40 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white text-6xl font-bold">${d.icon}</div>`;
         return `
     <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all">
       <div class="md:flex">
-        <div class="w-full md:w-48 flex items-center justify-center p-8 ${d.bgColor}">
-          <div class="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white text-4xl font-bold">${d.icon}</div>
+        <div class="w-full md:w-72 flex items-center justify-center p-10 ${d.bgColor}">
+          ${iconHtml}
         </div>
         <div class="p-8 flex-1">
           <h2 class="text-2xl font-bold mb-3">${d.title}</h2>

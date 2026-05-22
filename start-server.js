@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
     if (req.url === '/api/load' && req.method === 'GET') {
         const dataDir = path.join(__dirname, 'data');
         const result = {};
-        const files = ['directions.json', 'members.json', 'publications.json', 'news.json', 'messages.json'];
+        const files = ['directions.json', 'members.json', 'publications.json', 'news.json', 'messages.json', 'carousel.json'];
         let completed = 0;
         files.forEach(file => {
             const filePath = path.join(dataDir, file);
@@ -56,7 +56,7 @@ const server = http.createServer((req, res) => {
             try {
                 const data = JSON.parse(body);
                 const dataDir = path.join(__dirname, 'data');
-                const files = ['directions', 'members', 'publications', 'news', 'messages'];
+                const files = ['directions', 'members', 'publications', 'news', 'messages', 'carousel'];
                 let completed = 0;
                 files.forEach(key => {
                     if (data[key]) {

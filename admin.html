@@ -46,6 +46,7 @@
         <div class="flex min-h-[calc(100vh-65px)]">
             <aside class="w-56 bg-white border-r border-gray-200 p-4">
                 <nav class="space-y-1">
+                    <button onclick="switchTab('carousel')" data-tab="carousel" class="tab-btn w-full text-left px-4 py-2 rounded-lg font-medium transition-colors">轮播管理</button>
                     <button onclick="switchTab('directions')" data-tab="directions" class="tab-btn w-full text-left px-4 py-2 rounded-lg font-medium transition-colors">研究方向</button>
                     <button onclick="switchTab('members')" data-tab="members" class="tab-btn w-full text-left px-4 py-2 rounded-lg font-medium transition-colors">团队成员</button>
                     <button onclick="switchTab('publications')" data-tab="publications" class="tab-btn w-full text-left px-4 py-2 rounded-lg font-medium transition-colors">发表论文</button>
@@ -55,7 +56,17 @@
             </aside>
 
             <main class="flex-1 p-6">
-                <div id="tab-directions" class="tab-content">
+                <div id="tab-carousel" class="tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">轮播管理</h2>
+                    <div class="flex gap-2">
+                        <button onclick="openCarouselModal()" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">+ 新增轮播</button>
+                    </div>
+                </div>
+                    <div id="carousel-list" class="space-y-4"></div>
+                </div>
+
+                <div id="tab-directions" class="tab-content hidden">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-bold">研究方向管理</h2>
                     <div class="flex gap-2">
@@ -121,13 +132,27 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">名称</label>
                     <input id="dir-title" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="如：光学技术 (Optics)">
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">图标图片</label>
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <img id="dir-image-preview" src="" alt="" class="w-full h-full object-cover hidden">
+                            <span id="dir-image-placeholder" class="text-gray-400 text-lg">无</span>
+                        </div>
+                        <div class="flex-1">
+                            <input id="dir-image" type="file" accept="image/*" onchange="handleDirImage(event)" class="text-sm text-gray-500">
+                            <p class="text-xs text-gray-400 mt-1">建议 200x200 方形图片，PNG/JPG。上传后自动替换图标字母。</p>
+                            <button type="button" onclick="removeDirImage()" class="text-xs text-red-500 mt-1 hidden" id="dir-image-remove">删除图片</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">图标字母</label>
-                        <input id="dir-icon" type="text" required maxlength="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="O">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">图标字母（无图片时显示）</label>
+                        <input id="dir-icon" type="text" maxlength="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="O">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">背景色</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">背景色（无图片时显示）</label>
                         <select id="dir-bg" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                             <option value="bg-blue-600">蓝色</option>
                             <option value="bg-indigo-600">靛蓝</option>
@@ -338,8 +363,70 @@
         </div>
     </div>
 
+    <!-- 轮播弹窗 -->
+    <div id="carousel-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 id="carousel-modal-title" class="text-lg font-bold">新增轮播</h3>
+                <button onclick="closeCarouselModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form onsubmit="saveCarousel(event)" class="p-6 space-y-4">
+                <input type="hidden" id="carousel-id">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                    <input id="carousel-title" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="光学技术前沿研究">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                    <textarea id="carousel-desc" rows="2" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="探索激光、光纤传感与光谱分析的最新突破"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">图标字母</label>
+                        <input id="carousel-icon" type="text" maxlength="2" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="O">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">背景色</label>
+                        <select id="carousel-bg" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <option value="from-blue-600 to-sky-400">蓝色</option>
+                            <option value="from-indigo-600 to-purple-400">靛蓝</option>
+                            <option value="from-purple-600 to-pink-400">紫色</option>
+                            <option value="from-emerald-600 to-teal-400">绿色</option>
+                            <option value="from-orange-600 to-red-400">橙色</option>
+                            <option value="from-pink-600 to-rose-400">粉色</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">背景图片（可选）</label>
+                    <div class="flex items-center gap-4">
+                        <div class="w-20 h-12 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <img id="carousel-image-preview" src="" alt="" class="w-full h-full object-cover hidden">
+                            <span id="carousel-image-placeholder" class="text-gray-400 text-xs">无</span>
+                        </div>
+                        <div class="flex-1">
+                            <input id="carousel-image" type="file" accept="image/*" onchange="handleCarouselImage(event)" class="text-sm text-gray-500">
+                            <p class="text-xs text-gray-400 mt-1">建议 1200x600 横图。上传后替换渐变色背景。</p>
+                            <button type="button" onclick="removeCarouselImage()" class="text-xs text-red-500 mt-1 hidden" id="carousel-image-remove">删除图片</button>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">排序</label>
+                    <input id="carousel-sort" type="number" value="0" class="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-primary hover:bg-primary-dark text-white py-2 rounded-lg font-medium transition-colors">保存</button>
+                    <button type="button" onclick="closeCarouselModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        let data = { directions: [], members: [], publications: [], news: [], messages: [] };
+        let data = { directions: [], members: [], publications: [], news: [], messages: [], carousel: [] };
 
         // ===== 数据加载 =====
         async function loadData() {
@@ -421,6 +508,7 @@
             btn.classList.add('bg-primary', 'text-white');
             btn.classList.remove('text-gray-600', 'hover:bg-gray-100');
 
+            if (tab === 'carousel') loadCarousels();
             if (tab === 'directions') loadDirections();
             if (tab === 'members') loadMembers();
             if (tab === 'publications') loadPublications();
@@ -428,16 +516,126 @@
             if (tab === 'messages') loadMessages();
         }
 
+        // ===== 轮播 =====
+        function loadCarousels() {
+            const list = document.getElementById('carousel-list');
+            list.innerHTML = data.carousel.sort((a, b) => a.sortOrder - b.sortOrder).map(c => {
+                const imgStyle = c.image ? `background-image: url('${c.image}'); background-size: cover; background-position: center;` : '';
+                const preview = c.image
+                    ? `<div class="w-24 h-16 rounded-lg flex-shrink-0" style="${imgStyle}"></div>`
+                    : `<div class="w-24 h-16 ${c.bg.replace('from-', 'bg-').replace(' to-*', '')} rounded-lg flex items-center justify-center text-white text-xl font-bold flex-shrink-0">${c.icon}</div>`;
+                return `
+                <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-start justify-between">
+                    <div class="flex items-start gap-4">
+                        ${preview}
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold">${c.title}</h3>
+                                <span class="text-gray-400 text-sm">排序 ${c.sortOrder}</span>
+                            </div>
+                            <p class="text-gray-500 text-sm mt-1">${c.desc}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0">
+                        <button onclick='editCarousel(${c.id})' class="text-primary hover:text-primary-dark text-sm font-medium">编辑</button>
+                        <button onclick="deleteCarousel(${c.id})" class="text-red-500 hover:text-red-700 text-sm font-medium">删除</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function openCarouselModal(id = null) {
+            document.getElementById('carousel-modal').classList.remove('hidden');
+            document.getElementById('carousel-modal-title').textContent = id ? '编辑轮播' : '新增轮播';
+            const c = id ? data.carousel.find(x => x.id === id) : null;
+            document.getElementById('carousel-id').value = id || '';
+            document.getElementById('carousel-title').value = c ? c.title : '';
+            document.getElementById('carousel-desc').value = c ? c.desc : '';
+            document.getElementById('carousel-icon').value = c ? c.icon : '';
+            document.getElementById('carousel-bg').value = c ? c.bg : 'from-blue-600 to-sky-400';
+            document.getElementById('carousel-sort').value = c ? c.sortOrder : 0;
+            if (c && c.image) {
+                document.getElementById('carousel-image-preview').src = c.image;
+                document.getElementById('carousel-image-preview').classList.remove('hidden');
+                document.getElementById('carousel-image-placeholder').classList.add('hidden');
+                document.getElementById('carousel-image-remove').classList.remove('hidden');
+            } else {
+                document.getElementById('carousel-image-preview').classList.add('hidden');
+                document.getElementById('carousel-image-placeholder').classList.remove('hidden');
+                document.getElementById('carousel-image-remove').classList.add('hidden');
+                document.getElementById('carousel-image').value = '';
+            }
+        }
+
+        function closeCarouselModal() { document.getElementById('carousel-modal').classList.add('hidden'); }
+        function editCarousel(id) { openCarouselModal(id); }
+
+        function handleCarouselImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) { alert('图片不能超过 5MB'); event.target.value = ''; return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('carousel-image-preview').src = e.target.result;
+                document.getElementById('carousel-image-preview').classList.remove('hidden');
+                document.getElementById('carousel-image-placeholder').classList.add('hidden');
+                document.getElementById('carousel-image-remove').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeCarouselImage() {
+            document.getElementById('carousel-image-preview').src = '';
+            document.getElementById('carousel-image-preview').classList.add('hidden');
+            document.getElementById('carousel-image-placeholder').classList.remove('hidden');
+            document.getElementById('carousel-image-remove').classList.add('hidden');
+            document.getElementById('carousel-image').value = '';
+        }
+
+        function saveCarousel(e) {
+            e.preventDefault();
+            const id = document.getElementById('carousel-id').value;
+            const preview = document.getElementById('carousel-image-preview');
+            const hasImage = !preview.classList.contains('hidden');
+            const obj = {
+                title: document.getElementById('carousel-title').value,
+                desc: document.getElementById('carousel-desc').value,
+                icon: document.getElementById('carousel-icon').value || '',
+                bg: document.getElementById('carousel-bg').value,
+                image: hasImage ? preview.src : '',
+                sortOrder: parseInt(document.getElementById('carousel-sort').value)
+            };
+            if (id) {
+                const idx = data.carousel.findIndex(c => c.id === parseInt(id));
+                data.carousel[idx] = { ...data.carousel[idx], ...obj };
+            } else {
+                obj.id = getNextId(data.carousel);
+                data.carousel.push(obj);
+            }
+            closeCarouselModal();
+            loadCarousels();
+        }
+
+        function deleteCarousel(id) {
+            if (!confirm('确定删除此轮播？')) return;
+            data.carousel = data.carousel.filter(c => c.id !== id);
+            loadCarousels();
+        }
+
         // ===== 研究方向 =====
         function loadDirections() {
             const list = document.getElementById('directions-list');
             list.innerHTML = data.directions.map(d => {
                 const items = d.subItems || [];
+                const imgStyle = d.image ? `background-image: url('${d.image}'); background-size: cover; background-position: center;` : '';
+                const iconHtml = d.image
+                    ? `<div class="w-20 h-20 rounded-xl flex-shrink-0" style="${imgStyle}"></div>`
+                    : `<div class="w-20 h-20 ${d.bgColor} rounded-xl flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">${d.icon}</div>`;
                 return `
                 <div class="bg-white rounded-xl border border-gray-200 p-6">
                     <div class="flex items-start justify-between">
                         <div class="flex items-start gap-4">
-                            <div class="w-14 h-14 ${d.bgColor} rounded-xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">${d.icon}</div>
+                            ${iconHtml}
                             <div>
                                 <h3 class="text-lg font-bold">${d.title}</h3>
                                 <p class="text-gray-600 mt-1">${d.description}</p>
@@ -466,6 +664,43 @@
             document.getElementById('dir-desc').value = d ? d.description : '';
             document.getElementById('dir-subitems').value = d ? (d.subItems || []).join('\n') : '';
             document.getElementById('dir-sort').value = d ? d.sortOrder : 0;
+            if (d && d.image) {
+                document.getElementById('dir-image-preview').src = d.image;
+                document.getElementById('dir-image-preview').classList.remove('hidden');
+                document.getElementById('dir-image-placeholder').classList.add('hidden');
+                document.getElementById('dir-image-remove').classList.remove('hidden');
+            } else {
+                document.getElementById('dir-image-preview').classList.add('hidden');
+                document.getElementById('dir-image-placeholder').classList.remove('hidden');
+                document.getElementById('dir-image-remove').classList.add('hidden');
+                document.getElementById('dir-image').value = '';
+            }
+        }
+
+        function handleDirImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('图片不能超过 2MB');
+                event.target.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('dir-image-preview').src = e.target.result;
+                document.getElementById('dir-image-preview').classList.remove('hidden');
+                document.getElementById('dir-image-placeholder').classList.add('hidden');
+                document.getElementById('dir-image-remove').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeDirImage() {
+            document.getElementById('dir-image-preview').src = '';
+            document.getElementById('dir-image-preview').classList.add('hidden');
+            document.getElementById('dir-image-placeholder').classList.remove('hidden');
+            document.getElementById('dir-image-remove').classList.add('hidden');
+            document.getElementById('dir-image').value = '';
         }
 
         function closeDirectionModal() { document.getElementById('direction-modal').classList.add('hidden'); }
@@ -474,10 +709,13 @@
         function saveDirection(e) {
             e.preventDefault();
             const id = document.getElementById('dir-id').value;
+            const preview = document.getElementById('dir-image-preview');
+            const hasImage = !preview.classList.contains('hidden');
             const obj = {
                 title: document.getElementById('dir-title').value,
-                icon: document.getElementById('dir-icon').value,
+                icon: document.getElementById('dir-icon').value || '',
                 bgColor: document.getElementById('dir-bg').value,
+                image: hasImage ? preview.src : '',
                 description: document.getElementById('dir-desc').value,
                 subItems: document.getElementById('dir-subitems').value.split('\n').filter(s => s.trim()),
                 sortOrder: parseInt(document.getElementById('dir-sort').value)
@@ -505,7 +743,7 @@
             document.getElementById('members-list').innerHTML = data.members.map(m => `
                 <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        ${m.photo ? `<img src="${m.photo}" alt="${m.name}" class="w-12 h-12 rounded-full object-cover flex-shrink-0">` : `<div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">${m.name.charAt(0)}</div>`}
+                        ${m.photo ? `<img src="${m.photo}" alt="${m.name}" class="w-16 h-16 rounded-full object-cover flex-shrink-0">` : `<div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">${m.name.charAt(0)}</div>`}
                         <div>
                             <div class="flex items-center gap-2">
                                 <h3 class="font-bold">${m.name}</h3>
