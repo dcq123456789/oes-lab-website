@@ -48,6 +48,41 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // API: Upload image
+    if (req.url === '/api/upload' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const { data, name } = JSON.parse(body);
+                if (!data || !name) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: false, error: 'Missing data or name' }));
+                    return;
+                }
+                const imgDir = path.join(__dirname, 'image');
+                if (!fs.existsSync(imgDir)) fs.mkdirSync(imgDir, { recursive: true });
+                const ext = path.extname(name) || '.jpg';
+                const filename = Date.now() + ext;
+                const filePath = path.join(imgDir, filename);
+                const base64Data = data.replace(/^data:image\/\w+;base64,/, '');
+                fs.writeFile(filePath, base64Data, 'base64', (err) => {
+                    if (err) {
+                        res.writeHead(500, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ success: false, error: err.message }));
+                    } else {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ success: true, url: 'image/' + filename }));
+                    }
+                });
+            } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+        });
+        return;
+    }
+
     // API: Save all data
     if (req.url === '/api/save' && req.method === 'POST') {
         let body = '';

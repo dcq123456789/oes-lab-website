@@ -139,9 +139,13 @@
                             <img id="dir-image-preview" src="" alt="" class="w-full h-full object-cover hidden">
                             <span id="dir-image-placeholder" class="text-gray-400 text-lg">无</span>
                         </div>
-                        <div class="flex-1">
-                            <input id="dir-image" type="file" accept="image/*" onchange="handleDirImage(event)" class="text-sm text-gray-500">
-                            <p class="text-xs text-gray-400 mt-1">建议 200x200 方形图片，PNG/JPG。上传后自动替换图标字母。</p>
+                        <div class="flex-1 space-y-1">
+                            <input id="dir-image-file" type="file" accept="image/*" onchange="handleDirImageUpload(event)" class="text-sm text-gray-500">
+                            <p class="text-xs text-gray-400 mt-1">上传图片自动保存到 image/ 文件夹</p>
+                            <div class="flex gap-2 items-center">
+                                <input id="dir-image-url" type="text" placeholder="或输入图片 URL" class="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:ring-2 focus:ring-primary">
+                                <button type="button" onclick="applyDirImageUrl()" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded whitespace-nowrap">应用</button>
+                            </div>
                             <button type="button" onclick="removeDirImage()" class="text-xs text-red-500 mt-1 hidden" id="dir-image-remove">删除图片</button>
                         </div>
                     </div>
@@ -201,10 +205,14 @@
                         <img id="mem-photo-preview" src="" alt="" class="w-full h-full object-cover hidden">
                         <span id="mem-photo-placeholder" class="text-gray-400 text-3xl font-semibold">姓</span>
                     </div>
-                    <div>
+                    <div class="space-y-1">
                         <label class="block text-sm font-medium text-gray-700 mb-1">照片</label>
-                        <input id="mem-photo" type="file" accept="image/*" onchange="handlePhotoUpload(event)" class="text-sm text-gray-500">
-                        <p class="text-xs text-gray-400 mt-1">支持 JPG/PNG，建议 200x200</p>
+                        <input id="mem-photo-file" type="file" accept="image/*" onchange="handlePhotoUpload(event)" class="text-sm text-gray-500">
+                        <p class="text-xs text-gray-400 mt-1">上传图片自动保存到 image/ 文件夹</p>
+                        <div class="flex gap-2 items-center">
+                            <input id="mem-photo-url" type="text" placeholder="或输入图片 URL" class="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:ring-2 focus:ring-primary">
+                            <button type="button" onclick="applyPhotoUrl()" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded whitespace-nowrap">应用</button>
+                        </div>
                         <button type="button" onclick="removePhoto()" class="text-xs text-red-500 mt-1 hidden" id="mem-photo-remove">删除照片</button>
                     </div>
                 </div>
@@ -406,9 +414,13 @@
                             <img id="carousel-image-preview" src="" alt="" class="w-full h-full object-cover hidden">
                             <span id="carousel-image-placeholder" class="text-gray-400 text-xs">无</span>
                         </div>
-                        <div class="flex-1">
-                            <input id="carousel-image" type="file" accept="image/*" onchange="handleCarouselImage(event)" class="text-sm text-gray-500">
-                            <p class="text-xs text-gray-400 mt-1">建议 1200x600 横图。上传后替换渐变色背景。</p>
+                        <div class="flex-1 space-y-1">
+                            <input id="carousel-image-file" type="file" accept="image/*" onchange="handleCarouselImageUpload(event)" class="text-sm text-gray-500">
+                            <p class="text-xs text-gray-400 mt-1">上传图片自动保存到 image/ 文件夹</p>
+                            <div class="flex gap-2 items-center">
+                                <input id="carousel-image-url" type="text" placeholder="或输入图片 URL" class="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:ring-2 focus:ring-primary">
+                                <button type="button" onclick="applyCarouselImageUrl()" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded whitespace-nowrap">应用</button>
+                            </div>
                             <button type="button" onclick="removeCarouselImage()" class="text-xs text-red-500 mt-1 hidden" id="carousel-image-remove">删除图片</button>
                         </div>
                     </div>
@@ -559,29 +571,59 @@
                 document.getElementById('carousel-image-preview').classList.remove('hidden');
                 document.getElementById('carousel-image-placeholder').classList.add('hidden');
                 document.getElementById('carousel-image-remove').classList.remove('hidden');
+                document.getElementById('carousel-image-url').value = c.image;
             } else {
                 document.getElementById('carousel-image-preview').classList.add('hidden');
                 document.getElementById('carousel-image-placeholder').classList.remove('hidden');
                 document.getElementById('carousel-image-remove').classList.add('hidden');
-                document.getElementById('carousel-image').value = '';
+                document.getElementById('carousel-image-file').value = '';
+                document.getElementById('carousel-image-url').value = '';
             }
         }
 
         function closeCarouselModal() { document.getElementById('carousel-modal').classList.add('hidden'); }
         function editCarousel(id) { openCarouselModal(id); }
 
-        function handleCarouselImage(event) {
+        function handleCarouselImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (file.size > 5 * 1024 * 1024) { alert('图片不能超过 5MB'); event.target.value = ''; return; }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片不能超过 5MB');
+                event.target.value = '';
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(e) {
-                document.getElementById('carousel-image-preview').src = e.target.result;
-                document.getElementById('carousel-image-preview').classList.remove('hidden');
-                document.getElementById('carousel-image-placeholder').classList.add('hidden');
-                document.getElementById('carousel-image-remove').classList.remove('hidden');
+                const base64 = e.target.result;
+                fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: base64, name: file.name })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        document.getElementById('carousel-image-preview').src = res.url;
+                        document.getElementById('carousel-image-preview').classList.remove('hidden');
+                        document.getElementById('carousel-image-placeholder').classList.add('hidden');
+                        document.getElementById('carousel-image-remove').classList.remove('hidden');
+                        document.getElementById('carousel-image-url').value = res.url;
+                    } else {
+                        alert('上传失败: ' + res.error);
+                    }
+                })
+                .catch(() => alert('上传失败'));
             };
             reader.readAsDataURL(file);
+        }
+
+        function applyCarouselImageUrl() {
+            const url = document.getElementById('carousel-image-url').value.trim();
+            if (!url) return;
+            document.getElementById('carousel-image-preview').src = url;
+            document.getElementById('carousel-image-preview').classList.remove('hidden');
+            document.getElementById('carousel-image-placeholder').classList.add('hidden');
+            document.getElementById('carousel-image-remove').classList.remove('hidden');
         }
 
         function removeCarouselImage() {
@@ -589,7 +631,8 @@
             document.getElementById('carousel-image-preview').classList.add('hidden');
             document.getElementById('carousel-image-placeholder').classList.remove('hidden');
             document.getElementById('carousel-image-remove').classList.add('hidden');
-            document.getElementById('carousel-image').value = '';
+            document.getElementById('carousel-image-file').value = '';
+            document.getElementById('carousel-image-url').value = '';
         }
 
         function saveCarousel(e) {
@@ -669,30 +712,56 @@
                 document.getElementById('dir-image-preview').classList.remove('hidden');
                 document.getElementById('dir-image-placeholder').classList.add('hidden');
                 document.getElementById('dir-image-remove').classList.remove('hidden');
+                document.getElementById('dir-image-url').value = d.image;
             } else {
                 document.getElementById('dir-image-preview').classList.add('hidden');
                 document.getElementById('dir-image-placeholder').classList.remove('hidden');
                 document.getElementById('dir-image-remove').classList.add('hidden');
-                document.getElementById('dir-image').value = '';
+                document.getElementById('dir-image-file').value = '';
+                document.getElementById('dir-image-url').value = '';
             }
         }
 
-        function handleDirImage(event) {
+        function handleDirImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (file.size > 2 * 1024 * 1024) {
-                alert('图片不能超过 2MB');
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片不能超过 5MB');
                 event.target.value = '';
                 return;
             }
             const reader = new FileReader();
             reader.onload = function(e) {
-                document.getElementById('dir-image-preview').src = e.target.result;
-                document.getElementById('dir-image-preview').classList.remove('hidden');
-                document.getElementById('dir-image-placeholder').classList.add('hidden');
-                document.getElementById('dir-image-remove').classList.remove('hidden');
+                const base64 = e.target.result;
+                fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: base64, name: file.name })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        document.getElementById('dir-image-preview').src = res.url;
+                        document.getElementById('dir-image-preview').classList.remove('hidden');
+                        document.getElementById('dir-image-placeholder').classList.add('hidden');
+                        document.getElementById('dir-image-remove').classList.remove('hidden');
+                        document.getElementById('dir-image-url').value = res.url;
+                    } else {
+                        alert('上传失败: ' + res.error);
+                    }
+                })
+                .catch(() => alert('上传失败'));
             };
             reader.readAsDataURL(file);
+        }
+
+        function applyDirImageUrl() {
+            const url = document.getElementById('dir-image-url').value.trim();
+            if (!url) return;
+            document.getElementById('dir-image-preview').src = url;
+            document.getElementById('dir-image-preview').classList.remove('hidden');
+            document.getElementById('dir-image-placeholder').classList.add('hidden');
+            document.getElementById('dir-image-remove').classList.remove('hidden');
         }
 
         function removeDirImage() {
@@ -700,7 +769,8 @@
             document.getElementById('dir-image-preview').classList.add('hidden');
             document.getElementById('dir-image-placeholder').classList.remove('hidden');
             document.getElementById('dir-image-remove').classList.add('hidden');
-            document.getElementById('dir-image').value = '';
+            document.getElementById('dir-image-file').value = '';
+            document.getElementById('dir-image-url').value = '';
         }
 
         function closeDirectionModal() { document.getElementById('direction-modal').classList.add('hidden'); }
@@ -783,11 +853,13 @@
                 document.getElementById('mem-photo-preview').classList.remove('hidden');
                 document.getElementById('mem-photo-placeholder').classList.add('hidden');
                 document.getElementById('mem-photo-remove').classList.remove('hidden');
+                document.getElementById('mem-photo-url').value = m.photo;
             } else {
                 document.getElementById('mem-photo-preview').classList.add('hidden');
                 document.getElementById('mem-photo-placeholder').classList.remove('hidden');
                 document.getElementById('mem-photo-remove').classList.add('hidden');
-                document.getElementById('mem-photo').value = '';
+                document.getElementById('mem-photo-file').value = '';
+                document.getElementById('mem-photo-url').value = '';
             }
         }
 
@@ -797,19 +869,43 @@
         function handlePhotoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (file.size > 2 * 1024 * 1024) {
-                alert('照片大小不能超过 2MB');
+            if (file.size > 5 * 1024 * 1024) {
+                alert('照片大小不能超过 5MB');
                 event.target.value = '';
                 return;
             }
             const reader = new FileReader();
             reader.onload = function(e) {
-                document.getElementById('mem-photo-preview').src = e.target.result;
-                document.getElementById('mem-photo-preview').classList.remove('hidden');
-                document.getElementById('mem-photo-placeholder').classList.add('hidden');
-                document.getElementById('mem-photo-remove').classList.remove('hidden');
+                const base64 = e.target.result;
+                fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: base64, name: file.name })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        document.getElementById('mem-photo-preview').src = res.url;
+                        document.getElementById('mem-photo-preview').classList.remove('hidden');
+                        document.getElementById('mem-photo-placeholder').classList.add('hidden');
+                        document.getElementById('mem-photo-remove').classList.remove('hidden');
+                        document.getElementById('mem-photo-url').value = res.url;
+                    } else {
+                        alert('上传失败: ' + res.error);
+                    }
+                })
+                .catch(() => alert('上传失败'));
             };
             reader.readAsDataURL(file);
+        }
+
+        function applyPhotoUrl() {
+            const url = document.getElementById('mem-photo-url').value.trim();
+            if (!url) return;
+            document.getElementById('mem-photo-preview').src = url;
+            document.getElementById('mem-photo-preview').classList.remove('hidden');
+            document.getElementById('mem-photo-placeholder').classList.add('hidden');
+            document.getElementById('mem-photo-remove').classList.remove('hidden');
         }
 
         function removePhoto() {
@@ -817,7 +913,8 @@
             document.getElementById('mem-photo-preview').classList.add('hidden');
             document.getElementById('mem-photo-placeholder').classList.remove('hidden');
             document.getElementById('mem-photo-remove').classList.add('hidden');
-            document.getElementById('mem-photo').value = '';
+            document.getElementById('mem-photo-file').value = '';
+            document.getElementById('mem-photo-url').value = '';
         }
 
         function saveMember(e) {
