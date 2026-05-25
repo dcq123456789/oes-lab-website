@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 
 const PORT = 8080;
 const MIME_TYPES = {
@@ -77,7 +78,7 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // API: Upload image
+    // API: Upload image (auto-compress to ~20KB)
     if (req.url === '/api/upload' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
@@ -91,19 +92,50 @@ const server = http.createServer((req, res) => {
                 }
                 const imgDir = path.join(__dirname, 'image');
                 if (!fs.existsSync(imgDir)) fs.mkdirSync(imgDir, { recursive: true });
-                const ext = path.extname(name) || '.jpg';
-                const filename = Date.now() + ext;
+                const filename = Date.now() + '.jpg';
                 const filePath = path.join(imgDir, filename);
                 const base64Data = data.replace(/^data:image\/\w+;base64,/, '');
-                fs.writeFile(filePath, base64Data, 'base64', (err) => {
-                    if (err) {
-                        res.writeHead(500, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ success: false, error: err.message }));
-                    } else {
-                        res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ success: true, url: 'image/' + filename }));
-                    }
-                });
+                const buf = Buffer.from(base64Data, 'base64');
+
+                // Skip compress if already under 20KB
+                if (buf.length <= 20000) {
+                    fs.writeFile(filePath, buf, (err2) => {
+                        if (err2) {
+                            res.writeHead(500, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ success: false, error: err2.message }));
+                        } else {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ success: true, url: 'image/' + filename }));
+                        }
+                    });
+                    return;
+                }
+
+                let quality = 80;
+                const compress = () => {
+                    sharp(buf).jpeg({ quality }).toBuffer((err, outBuf) => {
+                        if (err) {
+                            res.writeHead(500, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ success: false, error: err.message }));
+                            return;
+                        }
+                        if (outBuf.length > 20000 && quality > 10) {
+                            quality -= 10;
+                            compress();
+                            return;
+                        }
+                        fs.writeFile(filePath, outBuf, (err2) => {
+                            if (err2) {
+                                res.writeHead(500, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ success: false, error: err2.message }));
+                            } else {
+                                res.writeHead(200, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ success: true, url: 'image/' + filename }));
+                            }
+                        });
+                    });
+                };
+                compress();
             } catch (err) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, error: err.message }));
