@@ -222,5 +222,16 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}/`);
-    console.log('Press Ctrl+C to stop.');
+    console.log('按 ESC 退出');
 });
+
+if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+    process.stdin.on('data', key => {
+        if (key[0] === 27) { // ESC
+            process.stdin.setRawMode(false);
+            process.exit();
+        }
+    });
+    process.stdin.resume();
+}
