@@ -206,7 +206,7 @@ const server = http.createServer((req, res) => {
                     if (err1) { res.end(JSON.stringify({ success: false, error: e1 || 'git add failed' })); return; }
                     run(`git commit -m "${msg}"`, (err2, e2) => {
                         if (err2) {
-                            if (e2.includes('nothing to commit')) {
+                            if (e2 && e2.includes('nothing to commit')) {
                                 res.end(JSON.stringify({ success: true, output: '没有新变更需要推送' }));
                             } else {
                                 res.end(JSON.stringify({ success: false, error: e2 || 'git commit failed' }));
