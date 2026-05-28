@@ -113,7 +113,7 @@ const server = http.createServer((req, res) => {
 
                 let quality = 80;
                 const compress = () => {
-                    sharp(buf).jpeg({ quality }).toBuffer((err, outBuf) => {
+                    sharp(buf).jpeg({ quality, progressive: true }).toBuffer((err, outBuf) => {
                         if (err) {
                             res.writeHead(500, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify({ success: false, error: err.message }));
