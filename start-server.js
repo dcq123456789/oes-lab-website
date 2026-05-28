@@ -198,18 +198,19 @@ const server = http.createServer((req, res) => {
                         const errOut = (stderr || '').trim();
                         if (out) logs.push(out);
                         if (errOut && !err) logs.push(errOut);
-                        cb(err, errOut);
+                        cb(err, errOut, out);
                     });
                 }
 
-                run(`git add -A`, (err1, e1) => {
+                run(`git add -A`, (err1, e1, o1) => {
                     if (err1) { res.end(JSON.stringify({ success: false, error: e1 || 'git add failed' })); return; }
-                    run(`git commit -m "${msg}"`, (err2, e2) => {
+                    run(`git commit -m "${msg}"`, (err2, e2, o2) => {
                         if (err2) {
-                            if (e2 && e2.includes('nothing to commit')) {
+                            const combined = (e2 || '') + (o2 || '');
+                            if (/nothing (to commit|added to commit)/i.test(combined)) {
                                 res.end(JSON.stringify({ success: true, output: '没有新变更需要推送' }));
                             } else {
-                                res.end(JSON.stringify({ success: false, error: e2 || 'git commit failed' }));
+                                res.end(JSON.stringify({ success: false, error: combined || 'git commit failed' }));
                             }
                             return;
                         }
