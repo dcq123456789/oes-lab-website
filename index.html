@@ -1052,7 +1052,7 @@
             showMemberList();
             renderMemberList();
             document.querySelectorAll('.member-filter-btn').forEach(btn => {
-                btn.className = 'filter-btn' + (btn.dataset.cat === cat ? ' active' : '');
+                btn.className = 'filter-btn member-filter-btn' + (btn.dataset.cat === cat ? ' active' : '');
             });
             document.getElementById('mobile-menu').classList.remove('open');
         }
@@ -1063,7 +1063,7 @@
             showNewsList();
             renderNewsPage();
             document.querySelectorAll('.news-filter-btn').forEach(btn => {
-                btn.className = 'filter-btn' + (btn.dataset.cat === cat ? ' active' : '');
+                btn.className = 'filter-btn news-filter-btn' + (btn.dataset.cat === cat ? ' active' : '');
             });
             document.getElementById('mobile-menu').classList.remove('open');
         }

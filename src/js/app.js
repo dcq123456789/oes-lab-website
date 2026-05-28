@@ -261,7 +261,7 @@ function filterMember() {
         currentMemberFilter = clicked.dataset.cat;
     }
     document.querySelectorAll('.member-filter-btn').forEach(function(btn) {
-        btn.className = 'filter-btn' + (btn.dataset.cat === currentMemberFilter ? ' active' : '');
+        btn.className = 'filter-btn member-filter-btn' + (btn.dataset.cat === currentMemberFilter ? ' active' : '');
     });
     renderMemberList();
 }
@@ -373,7 +373,7 @@ function filterNews() {
         currentNewsFilter = clicked.dataset.cat;
     }
     document.querySelectorAll('.news-filter-btn').forEach(function(btn) {
-        btn.className = 'filter-btn' + (btn.dataset.cat === currentNewsFilter ? ' active' : '');
+        btn.className = 'filter-btn news-filter-btn' + (btn.dataset.cat === currentNewsFilter ? ' active' : '');
     });
     renderNewsPage();
 }
