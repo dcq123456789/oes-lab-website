@@ -21,7 +21,10 @@
         html { scroll-behavior: smooth; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
         .page { display: none; }
-        .page.active { display: block; }
+        .page.active { display: block; animation: fadeIn .4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+        .reveal.show { opacity: 1; transform: translateY(0); }
         .dropdown { position: relative; }
         .dropdown-menu {
             display: none;
@@ -36,7 +39,7 @@
             padding: 0.5rem 0;
             z-index: 50;
         }
-        .dropdown:hover .dropdown-menu { display: block; }
+        .dropdown:hover .dropdown-menu { display: block; animation: fadeIn .2s ease; }
         .dropdown-menu a {
             display: block;
             padding: 0.5rem 1rem;
@@ -44,22 +47,24 @@
             font-size: 0.875rem;
             transition: all 0.2s;
         }
-        .dropdown-menu a:hover {
-            background: #f3f4f6;
-            color: #2563eb;
-        }
-        .nav-item {
-            position: relative;
-            padding: 0.5rem 0;
-        }
-        .nav-item > a {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
+        .dropdown-menu a:hover { background: #f3f4f6; color: #2563eb; }
+        .nav-item { position: relative; padding: 0.5rem 0; }
+        .nav-item > a { display: flex; align-items: center; gap: 0.25rem; }
         .nav-item:hover > a { color: #2563eb; }
         .nav-item:hover .dropdown-arrow { transform: rotate(180deg); }
         .dropdown-arrow { transition: transform 0.2s; }
+        #back-top {
+            position: fixed; bottom: 2rem; right: 2rem; z-index: 100;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: #2563eb; color: white; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(37,99,235,.3);
+            opacity: 0; visibility: hidden; transition: all .3s;
+        }
+        #back-top.show { opacity: 1; visibility: visible; }
+        #back-top:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(37,99,235,.4); }
+        .card-hover { transition: transform .3s, box-shadow .3s; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(0,0,0,.12); }
     </style>
 </head>
 <body class="min-h-screen bg-white">
@@ -135,7 +140,7 @@
     </nav>
 
     <div id="home" class="page active">
-        <section class="pt-20 bg-gradient-to-br from-blue-50 to-sky-100">
+        <section class="pt-20 bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-100">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div id="carousel" class="relative rounded-2xl overflow-hidden shadow-xl mb-8">
                     <div id="carousel-track" class="flex transition-transform duration-500 ease-in-out"></div>
@@ -148,7 +153,7 @@
                     <div id="carousel-dots" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"></div>
                 </div>
             </div>
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pb-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pb-28">
                 <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"><span class="text-primary">OES</span> 实验室</h1>
                 <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-8">聚焦光学、电学与传感技术的前沿研究，致力于推动多学科交叉融合与技术创新</p>
                 <div id="home-tags" class="flex flex-wrap justify-center gap-4"></div>
@@ -158,8 +163,11 @@
             </div>
         </section>
 
+        </section>
+        <div class="h-16 bg-gradient-to-b from-transparent to-gray-50 -mt-16 relative z-10"></div>
+
         <section class="py-16 bg-gray-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
                 <div class="flex justify-between items-end mb-12">
                     <div class="text-center flex-1">
                         <a href="#/research"><h2 class="text-3xl font-bold mb-2 hover:text-primary transition-colors">研究方向</h2></a>
@@ -172,7 +180,7 @@
         </section>
 
         <section class="py-16">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
                 <div class="flex justify-between items-end mb-12">
                     <div class="text-center flex-1">
                         <a href="#/member"><h2 class="text-3xl font-bold mb-2 hover:text-primary transition-colors">团队成员</h2></a>
@@ -185,7 +193,7 @@
         </section>
 
         <section class="py-16 bg-gray-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
                 <div class="flex justify-between items-end mb-12">
                     <div class="text-center flex-1">
                         <a href="#/news"><h2 class="text-3xl font-bold mb-2 hover:text-primary transition-colors">新闻动态</h2></a>
@@ -197,8 +205,8 @@
             </div>
         </section>
 
-        <section class="py-16 bg-gray-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section class="py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
                 <div class="flex justify-between items-end mb-12">
                     <div class="text-center flex-1">
                         <a href="#/publications"><h2 class="text-3xl font-bold mb-2 hover:text-primary transition-colors">最新论文</h2></a>
@@ -211,7 +219,7 @@
         </section>
 
         <section class="py-16">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
                 <h2 class="text-3xl font-bold mb-4">欢迎交流合作</h2>
                 <p class="text-gray-600 mb-8">如果您对我们的研究感兴趣，欢迎随时联系我们</p>
                 <a href="#/contact" class="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-lg font-medium transition-colors inline-block">联系我们</a>
@@ -366,10 +374,26 @@
         </section>
     </div>
 
-    <footer class="bg-gray-800 text-white py-8">
+    <button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+    </button>
+    <footer class="bg-gray-900 text-white py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p class="text-gray-400">&copy; 2026 OES实验室. All rights reserved.</p>
-            <p class="text-gray-500 text-sm mt-2">光学(Optics) · 电学(Electronics) · 传感(Sensing)</p>
+            <div class="flex items-center justify-center gap-2 mb-4">
+                <span class="text-2xl font-bold text-primary">OES</span>
+                <span class="text-gray-300 font-medium">实验室</span>
+            </div>
+            <div class="flex justify-center gap-6 mb-6 text-sm">
+                <a href="#/" class="text-gray-400 hover:text-white transition-colors">首页</a>
+                <a href="#/research" class="text-gray-400 hover:text-white transition-colors">研究方向</a>
+                <a href="#/member" class="text-gray-400 hover:text-white transition-colors">团队成员</a>
+                <a href="#/news" class="text-gray-400 hover:text-white transition-colors">新闻动态</a>
+                <a href="#/publications" class="text-gray-400 hover:text-white transition-colors">论文成果</a>
+                <a href="#/contact" class="text-gray-400 hover:text-white transition-colors">联系我们</a>
+            </div>
+            <div class="w-16 h-0.5 bg-primary/50 mx-auto mb-4"></div>
+            <p class="text-gray-500 text-sm">光学(Optics) · 电学(Electronics) · 传感(Sensing)</p>
+            <p class="text-gray-600 text-xs mt-2">&copy; 2026 OES实验室</p>
         </div>
     </footer>
 

@@ -160,7 +160,7 @@ function showNewsDetail(id) {
 // ===== 头像渲染 =====
 function renderAvatar(m, size = 'w-24 h-24') {
     if (m.photo) {
-        return `<img src="${m.photo}" alt="${m.name}" class="${size} mx-auto rounded-full object-cover mb-3">`;
+        return `<img src="${m.photo}" alt="${m.name}" loading="lazy" class="${size} mx-auto rounded-full object-cover mb-3">`;
     }
     const s = size.includes('28') ? 'text-4xl' : size.includes('24') ? 'text-3xl' : size.includes('20') ? 'text-2xl' : 'text-lg';
     return `<div class="${size} mx-auto rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white ${s} font-semibold mb-3">${m.name.charAt(0)}</div>`;
@@ -259,7 +259,7 @@ function renderHomeResearch() {
             ? `<div class="w-20 h-20 rounded-xl mb-4" style="${imgStyle}"></div>`
             : `<div class="w-20 h-20 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-bold mb-4">${d.icon}</div>`;
         return `
-    <a href="#/research" class="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all block">
+    <a href="#/research" class="bg-white p-6 rounded-xl border border-gray-200 card-hover block">
       ${iconHtml}
       <h3 class="text-xl font-semibold mb-2">${d.title.replace(/\s*\(.*\)/, '')}</h3>
       <p class="text-gray-600">${d.description}</p>
@@ -278,7 +278,7 @@ function renderResearchDetail() {
             ? `<div class="w-40 h-40 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white text-6xl font-bold" style="${imgStyle}"></div>`
             : `<div class="w-40 h-40 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white text-6xl font-bold">${d.icon}</div>`;
         return `
-    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all">
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden card-hover">
       <div class="md:flex">
         <div class="w-full md:w-72 flex items-center justify-center p-10 ${d.bgColor}">
           ${iconHtml}
@@ -300,7 +300,7 @@ function renderHomeTeam() {
     const container = document.getElementById('home-team');
     if (!container) return;
     container.innerHTML = members.slice(0, 4).map(m => `
-    <a href="#/member/${m.id}" class="text-center p-4 rounded-xl border border-gray-200 hover:shadow-md transition-all block">
+    <a href="#/member/${m.id}" class="text-center p-4 rounded-xl border border-gray-200 card-hover block">
       ${renderAvatar(m)}
       <h3 class="font-semibold">${m.name}</h3>
       <p class="text-primary text-sm font-medium">${m.role}</p>
@@ -317,7 +317,7 @@ function renderHomeNews() {
     }
     const colors = { '学术交流': 'bg-blue-100 text-blue-700', '科研动态': 'bg-green-100 text-green-700', '合作交流': 'bg-purple-100 text-purple-700', '其他': 'bg-gray-100 text-gray-700' };
     container.innerHTML = news.slice(0, 3).map(n => `
-    <a href="#/news/${n.id}" class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:-translate-y-1 transition-all block">
+    <a href="#/news/${n.id}" class="bg-white rounded-xl border border-gray-200 p-6 card-hover block">
       <div class="flex items-center gap-2 mb-3">
         <span class="${colors[n.category] || colors['其他']} text-xs px-2 py-1 rounded font-medium">${n.category}</span>
         <span class="text-gray-400 text-sm">${n.date}</span>
@@ -383,7 +383,7 @@ function renderMemberList() {
     }
     empty.classList.add('hidden');
     container.innerHTML = filtered.map(m => `
-    <a href="#/member/${m.id}" class="bg-white rounded-xl border border-gray-200 p-6 text-center hover:shadow-lg hover:-translate-y-1 transition-all block">
+    <a href="#/member/${m.id}" class="bg-white rounded-xl border border-gray-200 p-6 text-center card-hover block">
       ${renderAvatar(m, 'w-24 h-24')}
       <h3 class="text-lg font-bold">${m.name}</h3>
       <p class="text-primary font-medium text-sm mt-1">${m.role}</p>
@@ -421,7 +421,7 @@ function renderMemberPage(id, containerId = 'member-profile-content') {
       <div class="p-8 md:p-12">
         <div class="flex flex-col md:flex-row gap-10">
           <div class="flex-shrink-0 text-center md:text-left">
-            ${m.photo ? `<img src="${m.photo}" alt="${m.name}" class="w-48 h-60 mx-auto md:mx-0 rounded-lg object-cover shadow-md mb-4">` : `<div class="w-48 h-60 mx-auto md:mx-0 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-7xl font-semibold shadow-md mb-4">${m.name.charAt(0)}</div>`}
+            ${m.photo ? `<img src="${m.photo}" alt="${m.name}" loading="lazy" class="w-48 h-60 mx-auto md:mx-0 rounded-lg object-cover shadow-md mb-4">` : `<div class="w-48 h-60 mx-auto md:mx-0 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-7xl font-semibold shadow-md mb-4">${m.name.charAt(0)}</div>`}
             <h2 class="text-2xl font-bold text-gray-900">${m.name}</h2>
             <p class="text-gray-500 mt-1">${m.role}</p>
           </div>
@@ -548,6 +548,21 @@ function submitForm(e) {
 // ===== 初始化 =====
 async function init() {
     await loadData();
+
+    // Scroll reveal
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+        }, { threshold: .1 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    } else {
+        document.querySelectorAll('.reveal').forEach(el => el.classList.add('show'));
+    }
+
+    // Back to top
+    window.addEventListener('scroll', () => {
+        document.getElementById('back-top').classList.toggle('show', window.scrollY > 400);
+    });
 
     renderCarousel();
     renderHomeTags();
