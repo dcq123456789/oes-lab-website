@@ -14,17 +14,23 @@
 
 ```text
 .
-├── public/                # 静态资源根目录
-│   ├── index.html         # 前台展示入口
-│   ├── admin.html         # 后台管理页面
-│   ├── data/              # 数据存储目录 (JSON 格式)
-│   ├── image/             # 上传的图片文件
-│   └── src/js/
+├── data/                  # 数据存储目录 (JSON 格式)
+│   ├── directions.json    # 研究方向数据
+│   ├── members.json       # 团队成员数据
+│   ├── news.json          # 新闻动态数据
+│   ├── publications.json  # 发表论文数据
+│   ├── messages.json      # 留言数据
+│   └── carousel.json      # 轮播图数据
+├── image/                 # 上传的图片文件
+├── src/
+│   └── js/
 │       └── app.js         # 前端核心逻辑 (路由、渲染、交互)
-├── server/
-│   └── start-server.js    # 本地开发服务器 (Node.js)
+├── admin.html             # 后台管理页面
+├── index.html             # 前台展示入口
+├── start-server.js        # 本地开发服务器 (Node.js)
 ├── config/
 │   └── admin.json         # 管理员账号密码 (不纳入 Git)
+├── .nojekyll              # 禁用 GitHub Pages Jekyll 构建
 └── README.md              # 项目说明文档
 ```
 
@@ -43,7 +49,7 @@ cd oes-lab-website
 启动本地服务器：
 
 ```bash
-node server/start-server.js
+node start-server.js
 ```
 
 服务器启动后，访问以下地址：
