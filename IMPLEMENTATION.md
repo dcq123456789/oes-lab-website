@@ -13,7 +13,7 @@
 ```
 
 ```
-管理员 ─→ localhost:8080/admin.html ─→ start-server.js（Node.js）
+管理员 ─→ localhost:8080/admin.html ─→ server/start-server.js（Node.js）
                                             │
                                      ┌──────┼──────┐
                                      ↓      ↓      ↓
@@ -31,7 +31,7 @@
 | 地图 | 外链（百度/高德），不用 iframe |
 | 图片引用 | URL 相对路径（`image/xxx.jpg`） |
 
-## 四、后端（start-server.js）
+## 四、后端（server/start-server.js）
 
 | API | 方法 | 功能 |
 |-----|------|------|
@@ -78,7 +78,7 @@
 - **后台 `admin.html` 不可用**（无 Node.js 后端）
 
 ### Railway（备选，后台线上可用）
-- 完整部署 `start-server.js`
+- 完整部署 `server/start-server.js`
 - 使用 Volume 持久化 `data/` 和 `image/`
 - 后台线上可操作
 

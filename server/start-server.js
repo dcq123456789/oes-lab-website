@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
 
     // API: Load all data
     if (req.url === '/api/load' && req.method === 'GET') {
-        const dataDir = path.join(__dirname, 'data');
+        const dataDir = path.join(__dirname, '../public/data');
         const result = {};
         const files = ['directions.json', 'members.json', 'publications.json', 'news.json', 'messages.json', 'carousel.json'];
         let completed = 0;
@@ -56,7 +56,7 @@ const server = http.createServer((req, res) => {
         req.on('end', () => {
             try {
                 const { username, password } = JSON.parse(body);
-                const configPath = path.join(__dirname, 'config', 'admin.json');
+                const configPath = path.join(__dirname, '../config', 'admin.json');
                 let config = { username: 'admin', password: 'admin' };
                 if (fs.existsSync(configPath)) {
                     let raw = fs.readFileSync(configPath, 'utf-8');
@@ -90,7 +90,7 @@ const server = http.createServer((req, res) => {
                     res.end(JSON.stringify({ success: false, error: 'Missing data or name' }));
                     return;
                 }
-                const imgDir = path.join(__dirname, 'image');
+                const imgDir = path.join(__dirname, '../public/image');
                 if (!fs.existsSync(imgDir)) fs.mkdirSync(imgDir, { recursive: true });
                 const filename = Date.now() + '.jpg';
                 const filePath = path.join(imgDir, filename);
@@ -151,7 +151,7 @@ const server = http.createServer((req, res) => {
         req.on('end', () => {
             try {
                 const data = JSON.parse(body);
-                const dataDir = path.join(__dirname, 'data');
+                const dataDir = path.join(__dirname, '../public/data');
                 const files = ['directions', 'members', 'publications', 'news', 'messages', 'carousel'];
                 let completed = 0;
                 files.forEach(key => {
@@ -188,7 +188,7 @@ const server = http.createServer((req, res) => {
             try {
                 const { message } = JSON.parse(body);
                 const exec = require('child_process').exec;
-                const repoDir = __dirname;
+                const repoDir = path.join(__dirname, '..');
                 const msg = (message || 'update data via admin').replace(/"/g, '\\"');
                 const logs = [];
 
@@ -231,8 +231,7 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    let filePath = '.' + req.url;
-    if (filePath === './') filePath = './index.html';
+    let filePath = path.join(__dirname, '../public', req.url === '/' ? 'index.html' : req.url);
 
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = MIME_TYPES[extname] || 'application/octet-stream';

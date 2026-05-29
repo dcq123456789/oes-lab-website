@@ -14,20 +14,17 @@
 
 ```text
 .
-├── data/                  # 数据存储目录 (JSON 格式)
-│   ├── directions.json    # 研究方向数据
-│   ├── members.json       # 团队成员数据
-│   ├── news.json          # 新闻动态数据
-│   ├── publications.json  # 发表论文数据
-│   └── messages.json      # 留言数据
-├── src/
-│   ├── css/
-│   │   └── style.css      # 自定义样式
-│   └── js/
+├── public/                # 静态资源根目录
+│   ├── index.html         # 前台展示入口
+│   ├── admin.html         # 后台管理页面
+│   ├── data/              # 数据存储目录 (JSON 格式)
+│   ├── image/             # 上传的图片文件
+│   └── src/js/
 │       └── app.js         # 前端核心逻辑 (路由、渲染、交互)
-├── admin.html             # 后台管理页面
-── index.html             # 前台展示入口
-├── start-server.js        # 本地开发服务器 (Node.js)
+├── server/
+│   └── start-server.js    # 本地开发服务器 (Node.js)
+├── config/
+│   └── admin.json         # 管理员账号密码 (不纳入 Git)
 └── README.md              # 项目说明文档
 ```
 
@@ -46,7 +43,7 @@ cd oes-lab-website
 启动本地服务器：
 
 ```bash
-node start-server.js
+node server/start-server.js
 ```
 
 服务器启动后，访问以下地址：
