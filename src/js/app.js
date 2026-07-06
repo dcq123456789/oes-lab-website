@@ -1,33 +1,168 @@
+// ===== OES Lab Website — Application =====
+// Data layer, routing, rendering, cursor, reveal animations
+// Optimized: single init flow, no race condition
+
 let DATA = {};
 let carouselIndex = 0;
 let carouselTimer;
 
+// ===== Data Loader =====
+// Primary: load individual files (most reliable, works everywhere)
+// Fallback: try merged data.json (optimization for production deployment)
 async function loadData() {
-    const files = ['directions', 'members', 'publications', 'news', 'carousel'];
-    const promises = files.map(async (file) => {
-        try {
-            const res = await fetch('./data/' + file + '.json');
-            DATA[file] = await res.json();
-        } catch (e) {
-            console.error('Failed to load ' + file + '.json', e);
-            DATA[file] = [];
-        }
+    var files = ['directions', 'members', 'publications', 'news', 'carousel'];
+    var loaded = 0;
+
+    // Load all files in parallel
+    var promises = files.map(function (file) {
+        return fetch('./data/' + file + '.json')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                DATA[file] = data;
+                loaded++;
+            })
+            .catch(function (e) {
+                console.warn('Failed to load ' + file + '.json, trying merged...');
+                // If individual file fails, try merged data.json as fallback
+                return fetch('./data/data.json')
+                    .then(function (r) { return r.json(); })
+                    .then(function (merged) {
+                        for (var k in merged) {
+                            if (merged.hasOwnProperty(k)) DATA[k] = merged[k];
+                        }
+                    })
+                    .catch(function () {
+                        DATA[file] = [];
+                    });
+            });
     });
+
     await Promise.all(promises);
+
+    // If nothing loaded, try merged file as last resort
+    if (loaded === 0) {
+        try {
+            var res = await fetch('./data/data.json');
+            var merged = await res.json();
+            for (var k in merged) {
+                if (merged.hasOwnProperty(k)) DATA[k] = merged[k];
+            }
+            console.log('Loaded data from merged data.json');
+        } catch (e) {
+            console.error('Failed to load any data source', e);
+        }
+    }
+
+    // Ensure all keys exist
+    files.forEach(function (k) {
+        if (!DATA[k]) DATA[k] = [];
+    });
 }
 
 function getData(key) {
     return DATA[key] || [];
 }
 
+// ===== Page Routing =====
+const PAGES = {
+    'home': { title: 'OES实验室 - 光学·电学·传感' },
+    'research': { title: 'OES实验室 - 研究方向' },
+    'member': { title: 'OES实验室 - 团队成员' },
+    'news': { title: 'OES实验室 - 新闻动态' },
+    'publications': { title: 'OES实验室 - 发表论文' },
+    'contact': { title: 'OES实验室 - 联系我们' }
+};
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
+    var target = document.getElementById(pageId);
+    if (target) target.classList.add('active');
+    window.scrollTo(0, 0);
+    document.querySelectorAll('.nav-link').forEach(function (link) {
+        var lp = link.dataset.page;
+        link.classList.toggle('active', lp === pageId);
+    });
+    document.querySelectorAll('.mobile-link').forEach(function (link) {
+        var lp = link.dataset.page;
+        link.classList.toggle('active', lp === pageId);
+    });
+}
+
+function navigate(hash) {
+    var path = hash.replace('#/', '').replace('#', '') || 'home';
+    var parts = path.split('/');
+    if (parts[0] === 'member') {
+        if (parts[1]) {
+            var id = parseInt(parts[1]);
+            showPage('member');
+            showMemberProfile(id);
+            var members = getData('members');
+            var m = members.find(function (x) { return x.id === id; });
+            document.title = m ? 'OES实验室 - ' + m.name : PAGES.member.title;
+        } else {
+            showPage('member');
+            showMemberList();
+            document.title = PAGES.member.title;
+        }
+    } else if (parts[0] === 'news') {
+        if (parts[1]) {
+            var nid = parseInt(parts[1]);
+            showPage('news');
+            showNewsDetail(nid);
+            var news = getData('news');
+            var n = news.find(function (x) { return x.id === nid; });
+            document.title = n ? 'OES实验室 - ' + n.title : PAGES.news.title;
+        } else {
+            showPage('news');
+            showNewsList();
+            document.title = PAGES.news.title;
+        }
+    } else if (PAGES[parts[0]]) {
+        showPage(parts[0]);
+        showMemberList();
+        showNewsList();
+        document.title = PAGES[parts[0]].title;
+    } else {
+        showPage('home');
+        document.title = PAGES.home.title;
+    }
+}
+
+function toggleMobile() {
+    document.getElementById('mobile-menu').classList.toggle('open');
+}
+
+// ===== Filter helpers (called from inline onclick) =====
+function filterByCategory(cat) {
+    currentMemberFilter = cat;
+    showPage('member');
+    showMemberList();
+    renderMemberList();
+    document.querySelectorAll('.member-filter-btn').forEach(function (btn) {
+        btn.className = 'filter-btn member-filter-btn' + (btn.dataset.cat === cat ? ' active' : '');
+    });
+    document.getElementById('mobile-menu').classList.remove('open');
+}
+
+function filterNewsByCategory(cat) {
+    currentNewsFilter = cat;
+    showPage('news');
+    showNewsList();
+    renderNewsPage();
+    document.querySelectorAll('.news-filter-btn').forEach(function (btn) {
+        btn.className = 'filter-btn news-filter-btn' + (btn.dataset.cat === cat ? ' active' : '');
+    });
+    document.getElementById('mobile-menu').classList.remove('open');
+}
+
 // ===== Custom Cursor =====
 (function initCursor() {
     if ('ontouchstart' in window) return;
-    const outer = document.getElementById('cursorOuter');
-    const inner = document.getElementById('cursorInner');
+    var outer = document.getElementById('cursorOuter');
+    var inner = document.getElementById('cursorInner');
     if (!outer || !inner) return;
-    let mx = 0, my = 0, ox = 0, oy = 0, ix = 0, iy = 0;
-    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    var mx = 0, my = 0, ox = 0, oy = 0, ix = 0, iy = 0;
+    document.addEventListener('mousemove', function (e) { mx = e.clientX; my = e.clientY; });
     function lerp() {
         ox += (mx - ox) * 0.12;
         oy += (my - oy) * 0.12;
@@ -40,11 +175,11 @@ function getData(key) {
         requestAnimationFrame(lerp);
     }
     lerp();
-    document.addEventListener('mouseleave', () => { outer.style.opacity = '0'; inner.style.opacity = '0'; });
-    document.addEventListener('mouseenter', () => { outer.style.opacity = '1'; inner.style.opacity = '1'; });
-    document.querySelectorAll('a, button, .card, .research-card, .contact-item, .map-placeholder, .filter-btn, .member-card, .stat-card').forEach(el => {
-        el.addEventListener('mouseenter', () => outer.classList.add('hover'));
-        el.addEventListener('mouseleave', () => outer.classList.remove('hover'));
+    document.addEventListener('mouseleave', function () { outer.style.opacity = '0'; inner.style.opacity = '0'; });
+    document.addEventListener('mouseenter', function () { outer.style.opacity = '1'; inner.style.opacity = '1'; });
+    document.querySelectorAll('a, button, .card, .research-card, .contact-item, .map-placeholder, .filter-btn, .member-card, .stat-card').forEach(function (el) {
+        el.addEventListener('mouseenter', function () { outer.classList.add('hover'); });
+        el.addEventListener('mouseleave', function () { outer.classList.remove('hover'); });
     });
 })();
 
@@ -52,27 +187,27 @@ function getData(key) {
 (function initReveal() {
     try {
         if ('IntersectionObserver' in window) {
-            const observer = new IntersectionObserver(entries => {
-                entries.forEach(e => {
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
                     if (e.isIntersecting) {
                         e.target.classList.add('show');
                         observer.unobserve(e.target);
                     }
                 });
             }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+            document.querySelectorAll('.reveal').forEach(function (el) { observer.observe(el); });
         } else {
-            document.querySelectorAll('.reveal').forEach(el => el.classList.add('show'));
+            document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('show'); });
         }
-    } catch(e) { console.warn('initReveal:', e); }
+    } catch (e) { console.warn('initReveal:', e); }
 })();
 
 // ===== Counter Animation =====
 function animateCounter(el, target, duration) {
-    const start = performance.now();
+    var start = performance.now();
     function update(now) {
-        const t = Math.min((now - start) / duration, 1);
-        const eased = 1 - Math.pow(1 - t, 3);
+        var t = Math.min((now - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - t, 3);
         el.textContent = Math.floor(eased * target);
         if (t < 1) requestAnimationFrame(update);
         else el.textContent = target;
@@ -81,23 +216,27 @@ function animateCounter(el, target, duration) {
 }
 
 // ===== Avatar =====
-function renderAvatar(m, size, textSize) {
-    const imgSize = size || 'w-24 h-24';
+function renderAvatar(m) {
     if (m.photo) {
-        const cls = 'member-avatar' + (imgSize.includes('48') || imgSize.includes('60') ? '' : '');
-        return '<img src="' + m.photo + '" alt="' + m.name + '" loading="lazy" class="' + cls + '">';
+        return '<img src="' + m.photo + '" alt="' + m.name + '" loading="lazy" decoding="async" class="member-avatar">';
     }
     return '<div class="member-avatar-placeholder" style="width:96px;height:96px;font-size:36px">' + m.name.charAt(0) + '</div>';
 }
 
+// ===== HTML Escape (basic XSS prevention) =====
+function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // ===== Carousel =====
 function getCarouselItems() {
-    return getData('carousel').sort((a, b) => a.sortOrder - b.sortOrder);
+    return getData('carousel').sort(function (a, b) { return a.sortOrder - b.sortOrder; });
 }
 
 function renderCarousel() {
-    const track = document.getElementById('carousel-track');
-    const dots = document.getElementById('carousel-dots');
+    var track = document.getElementById('carousel-track');
+    var dots = document.getElementById('carousel-dots');
     if (!track) return;
     var tailwindColors = { 'blue': '#3b82f6', 'sky': '#38bdf8', 'indigo': '#6366f1', 'purple': '#a855f7', 'pink': '#ec4899', 'emerald': '#10b981', 'teal': '#14b8a6', 'cyan': '#06b6d4', 'violet': '#8b5cf6', 'fuchsia': '#d946ef', 'rose': '#f43f5e', 'slate': '#64748b', 'gray': '#6b7280', 'neutral': '#737373', 'stone': '#78716c', 'red': '#ef4444', 'orange': '#f97316', 'amber': '#f59e0b', 'yellow': '#eab308', 'lime': '#84cc16', 'green': '#22c55e' };
     function parseBg(bg) {
@@ -109,35 +248,35 @@ function renderCarousel() {
         var c2 = tailwindColors[toColor] || '#8b5cf6';
         return 'linear-gradient(135deg,' + c1 + ',' + c2 + ')';
     }
-    const items = getCarouselItems();
-    track.innerHTML = items.map(item => {
+    var items = getCarouselItems();
+    track.innerHTML = items.map(function (item) {
         var bgStyle = '';
         if (item.image) {
-            bgStyle = 'background-image:url(\'' + item.image + '\');background-size:cover;background-position:center;';
+            bgStyle = 'background-image:url(\'' + esc(item.image) + '\');background-size:cover;background-position:center;';
         } else {
             bgStyle = 'background:' + parseBg(item.bg) + ';';
         }
         var overlay = item.image ? '<div class="carousel-overlay"></div>' : '<div class="carousel-overlay" style="background:rgba(0,0,0,0.2)"></div>';
-        var clickHandler = item.link ? (item.link.startsWith('#') ? ' onclick="window.location.href=\'' + item.link + '\'"' : ' onclick="window.open(\'' + item.link + '\',\'_blank\')"') : '';
-        return '<div class="carousel-slide' + (item.link ? ' carousel-linked' : '') + '" style="' + bgStyle + '"' + clickHandler + '>' +
+        var clickHandler = item.link ? (item.link.startsWith('#') ? ' onclick="window.location.href=\'' + esc(item.link) + '\'"' : ' onclick="window.open(\'' + esc(item.link) + '\',\'_blank\')"') : '';
+        return '<div class="carousel-slide' + (item.link ? ' carousel-linked' : '') + '" style="' + bgStyle + '"' + clickHandler + ' role="group" aria-roledescription="slide" aria-label="' + esc(item.title) + '">' +
             overlay +
             '<div class="carousel-content">' +
-            '<div class="carousel-icon">' + item.icon + '</div>' +
-            '<div class="carousel-title">' + item.title + '</div>' +
-            '<div class="carousel-desc">' + item.desc + '</div>' +
+            '<div class="carousel-icon">' + esc(item.icon) + '</div>' +
+            '<div class="carousel-title">' + esc(item.title) + '</div>' +
+            '<div class="carousel-desc">' + esc(item.desc) + '</div>' +
             '</div></div>';
     }).join('');
-    dots.innerHTML = items.map((_, i) =>
-        '<button onclick="carouselGo(' + i + ')" class="carousel-dot" style="width:10px;height:10px;border-radius:50%;border:none;cursor:pointer;transition:all 0.3s;background:' + (i === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.3)') + '"></button>'
-    ).join('');
+    dots.innerHTML = items.map(function (_, i) {
+        return '<button onclick="carouselGo(' + i + ')" class="carousel-dot" style="width:10px;height:10px;border-radius:50%;border:none;cursor:pointer;transition:all 0.3s;background:' + (i === 0 ? 'var(--accent)' : 'rgba(255,255,255,0.3)') + '" aria-label="幻灯片 ' + (i + 1) + '"></button>';
+    }).join('');
     startCarousel();
 }
 
 function carouselGo(index) {
     carouselIndex = index;
-    const track = document.getElementById('carousel-track');
+    var track = document.getElementById('carousel-track');
     if (track) track.style.transform = 'translateX(-' + (index * 100) + '%)';
-    document.querySelectorAll('#carousel-dots button').forEach((dot, i) => {
+    document.querySelectorAll('#carousel-dots button').forEach(function (dot, i) {
         dot.style.background = i === index ? 'var(--accent)' : 'rgba(255,255,255,0.3)';
     });
     resetCarousel();
@@ -145,122 +284,122 @@ function carouselGo(index) {
 
 function carouselPrev() { carouselGo((carouselIndex - 1 + getCarouselItems().length) % getCarouselItems().length); }
 function carouselNext() { carouselGo((carouselIndex + 1) % getCarouselItems().length); }
-function startCarousel() { carouselTimer = setInterval(function() { carouselNext(); }, 5000); }
+function startCarousel() { carouselTimer = setInterval(carouselNext, 5000); }
 function resetCarousel() { clearInterval(carouselTimer); startCarousel(); }
 
 // ===== Home Tags =====
 function renderHomeTags() {
-    const directions = getData('directions');
-    const container = document.getElementById('home-tags');
+    var directions = getData('directions');
+    var container = document.getElementById('home-tags');
     if (!container) return;
-    container.innerHTML = directions.map(function(d) {
+    container.innerHTML = directions.map(function (d) {
         var label = d.title.replace(/\s*\(.*\)/, '');
-        return '<span class="tag">' + label + '</span>';
+        return '<span class="tag">' + esc(label) + '</span>';
     }).join('');
 }
 
 // ===== Home Research =====
 function renderHomeResearch() {
-    const directions = getData('directions');
-    const container = document.getElementById('home-research');
+    var directions = getData('directions');
+    var container = document.getElementById('home-research');
     if (!container) return;
-    container.innerHTML = directions.map(function(d) {
+    container.innerHTML = directions.map(function (d) {
         var iconHtml = d.image
-            ? '<div style="width:64px;height:64px;border-radius:var(--radius-lg);background-size:cover;background-position:center;background-image:url(\'' + d.image + '\');margin-bottom:var(--space-md)"></div>'
-            : '<div style="width:64px;height:64px;border-radius:var(--radius-lg);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:var(--space-md)">' + d.icon + '</div>';
+            ? '<div style="width:64px;height:64px;border-radius:var(--radius-lg);background-size:cover;background-position:center;background-image:url(\'' + esc(d.image) + '\');margin-bottom:var(--space-md)"></div>'
+            : '<div style="width:64px;height:64px;border-radius:var(--radius-lg);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:var(--space-md)">' + esc(d.icon) + '</div>';
         return '<a href="#/research" class="card">' +
             iconHtml +
-            '<h3 class="h3" style="margin-bottom:var(--space-sm)">' + d.title.replace(/\s*\(.*\)/, '') + '</h3>' +
-            '<p class="body">' + d.description + '</p></a>';
+            '<h3 class="h3" style="margin-bottom:var(--space-sm)">' + esc(d.title.replace(/\s*\(.*\)/, '')) + '</h3>' +
+            '<p class="body">' + esc(d.description) + '</p></a>';
     }).join('');
 }
 
 // ===== Research Detail =====
 function renderResearchDetail() {
-    const directions = getData('directions');
-    const container = document.getElementById('research-detail');
+    var directions = getData('directions');
+    var container = document.getElementById('research-detail');
     if (!container) return;
-    container.innerHTML = directions.map(function(d) {
+    container.innerHTML = directions.map(function (d) {
         var items = d.subItems || [];
         var iconHtml = d.image
-            ? '<div style="width:140px;height:140px;border-radius:var(--radius-xl);background-size:cover;background-position:center;background-image:url(\'' + d.image + '\')"></div>'
-            : '<div style="width:140px;height:140px;border-radius:var(--radius-xl);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:56px">' + d.icon + '</div>';
+            ? '<div style="width:140px;height:140px;border-radius:var(--radius-xl);background-size:cover;background-position:center;background-image:url(\'' + esc(d.image) + '\')"></div>'
+            : '<div style="width:140px;height:140px;border-radius:var(--radius-xl);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:56px">' + esc(d.icon) + '</div>';
         return '<div class="research-card">' +
             '<div class="research-visual" style="background:' + (d.bgColor || 'var(--bg-card)') + '">' + iconHtml + '</div>' +
             '<div class="research-body">' +
-            '<h2>' + d.title + '</h2>' +
-            '<p class="body" style="margin-bottom:var(--space-md)">' + d.description + '</p>' +
-            '<ul>' + items.map(function(item) { return '<li>' + item + '</li>'; }).join('') + '</ul>' +
+            '<h2>' + esc(d.title) + '</h2>' +
+            '<p class="body" style="margin-bottom:var(--space-md)">' + esc(d.description) + '</p>' +
+            '<ul>' + items.map(function (item) { return '<li>' + esc(item) + '</li>'; }).join('') + '</ul>' +
             '</div></div>';
     }).join('');
 }
 
 // ===== Home Team =====
 function renderHomeTeam() {
-    const members = getData('members');
-    const container = document.getElementById('home-team');
+    var members = getData('members');
+    var container = document.getElementById('home-team');
     if (!container) return;
-    container.innerHTML = members.slice(0, 4).map(function(m) {
+    container.innerHTML = members.slice(0, 4).map(function (m) {
         return '<a href="#/member/' + m.id + '" class="card card-compact member-card text-center">' +
             renderAvatar(m) +
-            '<h3 class="fw-600">' + m.name + '</h3>' +
-            '<p class="text-accent small fw-500" style="margin-top:2px">' + m.role + '</p></a>';
+            '<h3 class="fw-600">' + esc(m.name) + '</h3>' +
+            '<p class="text-accent small fw-500" style="margin-top:2px">' + esc(m.role) + '</p></a>';
     }).join('');
 }
 
 // ===== Home News =====
 function renderHomeNews() {
-    const news = getData('news');
-    const container = document.getElementById('home-news');
+    var news = getData('news');
+    var container = document.getElementById('home-news');
     if (!container) return;
     if (news.length === 0) {
         container.innerHTML = '<p class="body text-center" style="grid-column:1/-1;padding:var(--space-3xl) 0">暂无新闻</p>';
         return;
     }
-    container.innerHTML = news.slice(0, 3).map(function(n) {
+    container.innerHTML = news.slice(0, 3).map(function (n) {
         return '<a href="#/news/' + n.id + '" class="card news-card">' +
             '<div class="news-meta">' +
-            '<span class="tag tag-sm">' + (n.category || '其他') + '</span>' +
-            '<span class="micro" style="text-transform:none;letter-spacing:normal">' + n.date + '</span>' +
+            '<span class="tag tag-sm">' + esc(n.category || '其他') + '</span>' +
+            '<span class="micro" style="text-transform:none;letter-spacing:normal">' + esc(n.date) + '</span>' +
             '</div>' +
-            '<h3 class="news-title">' + n.title + '</h3>' +
-            '<p class="news-excerpt">' + n.content + '</p></a>';
+            '<h3 class="news-title">' + esc(n.title) + '</h3>' +
+            '<p class="news-excerpt">' + esc(n.content) + '</p></a>';
     }).join('');
 }
 
 // ===== Member =====
-let currentMemberFilter = '';
+var currentMemberFilter = '';
 
 function renderMemberList() {
-    const members = getData('members');
-    const filtered = currentMemberFilter ? members.filter(function(m) { return m.category === currentMemberFilter; }) : members;
-    const container = document.getElementById('member-detail');
-    const empty = document.getElementById('member-empty');
+    var members = getData('members');
+    var filtered = currentMemberFilter ? members.filter(function (m) { return m.category === currentMemberFilter; }) : members;
+    var container = document.getElementById('member-detail');
+    var empty = document.getElementById('member-empty');
     if (!container) return;
     if (filtered.length === 0) {
         container.innerHTML = '';
-        empty.style.display = '';
+        if (empty) empty.style.display = '';
         return;
     }
-    empty.style.display = 'none';
-    container.innerHTML = filtered.map(function(m) {
+    if (empty) empty.style.display = 'none';
+    container.innerHTML = filtered.map(function (m) {
         return '<a href="#/member/' + m.id + '" class="card card-compact member-card text-center">' +
             renderAvatar(m) +
-            '<h3 class="fw-600">' + m.name + '</h3>' +
-            '<p class="text-accent small fw-500" style="margin-top:2px">' + m.role + '</p>' +
-            '<span class="tag tag-sm" style="margin-top:var(--space-sm)">' + m.category + '</span>' +
-            '<p class="small text-dim" style="margin-top:var(--space-sm)">' + (m.bio || '') + '</p></a>';
+            '<h3 class="fw-600">' + esc(m.name) + '</h3>' +
+            '<p class="text-accent small fw-500" style="margin-top:2px">' + esc(m.role) + '</p>' +
+            '<span class="tag tag-sm" style="margin-top:var(--space-sm)">' + esc(m.category) + '</span>' +
+            '<p class="small text-dim" style="margin-top:var(--space-sm)">' + esc(m.bio || '') + '</p></a>';
     }).join('');
 }
 
-function filterMember() {
-    const clicked = event.target;
+function filterMember(e) {
+    var clicked = (e && e.target) || event.target;
     if (clicked.dataset.cat === currentMemberFilter) {
         currentMemberFilter = '';
     } else {
         currentMemberFilter = clicked.dataset.cat;
     }
-    document.querySelectorAll('.member-filter-btn').forEach(function(btn) {
+    document.querySelectorAll('.member-filter-btn').forEach(function (btn) {
         btn.className = 'filter-btn member-filter-btn' + (btn.dataset.cat === currentMemberFilter ? ' active' : '');
     });
     renderMemberList();
@@ -282,41 +421,41 @@ function showMemberProfile(id) {
 
 function renderMemberPage(id, containerId) {
     containerId = containerId || 'member-profile-content';
-    const members = getData('members');
-    const m = members.find(function(x) { return x.id === id; });
+    var members = getData('members');
+    var m = members.find(function (x) { return x.id === id; });
     if (!m) return;
-    const resume = m.resume || '【个人简历】\n' + (m.bio || '');
-    const research = m.research || '';
-    const education = m.education || '';
-    const experience = m.experience || '';
+    var resume = m.resume || '【个人简历】\n' + (m.bio || '');
+    var research = m.research || '';
+    var education = m.education || '';
+    var experience = m.experience || '';
     var photoHtml = m.photo
-        ? '<img src="' + m.photo + '" alt="' + m.name + '" loading="lazy" class="profile-photo">'
-        : '<div class="profile-photo-placeholder" style="background:var(--accent-bg);color:var(--fg)">' + m.name.charAt(0) + '</div>';
+        ? '<img src="' + esc(m.photo) + '" alt="' + esc(m.name) + '" loading="lazy" decoding="async" class="profile-photo">'
+        : '<div class="profile-photo-placeholder" style="background:var(--accent-bg);color:var(--fg)">' + esc(m.name.charAt(0)) + '</div>';
     document.getElementById(containerId).innerHTML =
         '<div class="profile-card">' +
         '<div class="profile-inner">' +
         '<div class="text-center" style="text-align:center">' +
         photoHtml +
-        '<h2 class="profile-name" style="margin-top:var(--space-md)">' + m.name + '</h2>' +
-        '<p class="profile-role">' + m.role + '</p>' +
+        '<h2 class="profile-name" style="margin-top:var(--space-md)">' + esc(m.name) + '</h2>' +
+        '<p class="profile-role">' + esc(m.role) + '</p>' +
         '</div>' +
         '<div class="profile-section">' +
         '<h4>个人简介</h4>' +
         '<div class="section-divider"></div>' +
         '<div style="display:flex;flex-direction:column;gap:var(--space-lg);color:var(--fg-muted);font-size:var(--text-body);line-height:var(--leading-relaxed)">' +
-        (resume ? '<div style="white-space:pre-wrap">' + resume + '</div>' : '') +
-        (education ? '<div><h4 style="font-weight:600;color:var(--fg);margin-bottom:var(--space-sm)">教育经历</h4><div style="white-space:pre-wrap;font-size:var(--text-small)">' + education + '</div></div>' : '') +
-        (experience ? '<div><h4 style="font-weight:600;color:var(--fg);margin-bottom:var(--space-sm)">工作经历</h4><div style="white-space:pre-wrap;font-size:var(--text-small)">' + experience + '</div></div>' : '') +
+        (resume ? '<div style="white-space:pre-wrap">' + esc(resume) + '</div>' : '') +
+        (education ? '<div><h4 style="font-weight:600;color:var(--fg);margin-bottom:var(--space-sm)">教育经历</h4><div style="white-space:pre-wrap;font-size:var(--text-small)">' + esc(education) + '</div></div>' : '') +
+        (experience ? '<div><h4 style="font-weight:600;color:var(--fg);margin-bottom:var(--space-sm)">工作经历</h4><div style="white-space:pre-wrap;font-size:var(--text-small)">' + esc(experience) + '</div></div>' : '') +
         ((m.email || m.phone) ? '<div style="padding-top:var(--space-md);border-top:1px solid var(--border)">' +
-            (m.phone ? '<p class="profile-info"><span class="profile-info-label">电话：</span>' + m.phone + '</p>' : '') +
-            (m.email ? '<p class="profile-info" style="margin-top:4px"><span class="profile-info-label">邮箱：</span>' + m.email + '</p>' : '') +
+            (m.phone ? '<p class="profile-info"><span class="profile-info-label">电话：</span>' + esc(m.phone) + '</p>' : '') +
+            (m.email ? '<p class="profile-info" style="margin-top:4px"><span class="profile-info-label">邮箱：</span>' + esc(m.email) + '</p>' : '') +
             '</div>' : '') +
-        (research ? '<div style="padding-top:var(--space-sm)"><h4 style="font-weight:600;color:var(--fg);margin-bottom:var(--space-sm)">研究方向</h4><p style="font-size:var(--text-small)">' + research + '</p></div>' : '') +
+        (research ? '<div style="padding-top:var(--space-sm)"><h4 style="font-weight:600;color:var(--fg);margin-bottom:var(--space-sm)">研究方向</h4><p style="font-size:var(--text-small)">' + esc(research) + '</p></div>' : '') +
         '</div></div></div></div>';
 }
 
 // ===== News =====
-let currentNewsFilter = '';
+var currentNewsFilter = '';
 
 function showNewsList() {
     document.getElementById('news-list-view').style.display = '';
@@ -324,55 +463,55 @@ function showNewsList() {
 }
 
 function showNewsDetail(id) {
-    const news = getData('news');
-    const n = news.find(function(x) { return x.id === id; });
+    var news = getData('news');
+    var n = news.find(function (x) { return x.id === id; });
     if (!n) return;
     document.getElementById('news-detail-content').innerHTML =
         '<div class="profile-card">' +
         '<div class="profile-inner" style="grid-template-columns:1fr">' +
         '<div>' +
         '<div class="news-meta">' +
-        '<span class="tag tag-sm">' + (n.category || '其他') + '</span>' +
-        '<span class="small text-dim">' + (n.date || '') + '</span>' +
+        '<span class="tag tag-sm">' + esc(n.category || '其他') + '</span>' +
+        '<span class="small text-dim">' + esc(n.date || '') + '</span>' +
         '</div>' +
-        '<h1 class="h2" style="margin-bottom:var(--space-lg)">' + n.title + '</h1>' +
-        '<div style="color:var(--fg-muted);line-height:var(--leading-relaxed);white-space:pre-wrap">' + (n.content || '') + '</div>' +
+        '<h1 class="h2" style="margin-bottom:var(--space-lg)">' + esc(n.title) + '</h1>' +
+        '<div style="color:var(--fg-muted);line-height:var(--leading-relaxed);white-space:pre-wrap">' + esc(n.content || '') + '</div>' +
         '</div></div></div>';
     document.getElementById('news-list-view').style.display = 'none';
     document.getElementById('news-detail-view').style.display = '';
 }
 
 function renderNewsPage() {
-    const news = getData('news');
-    const container = document.getElementById('news-list-page');
-    const empty = document.getElementById('news-empty');
+    var news = getData('news');
+    var container = document.getElementById('news-list-page');
+    var empty = document.getElementById('news-empty');
     if (!container) return;
-    const filtered = currentNewsFilter ? news.filter(function(n) { return n.category === currentNewsFilter; }) : news;
+    var filtered = currentNewsFilter ? news.filter(function (n) { return n.category === currentNewsFilter; }) : news;
     if (filtered.length === 0) {
         container.innerHTML = '';
-        empty.style.display = '';
+        if (empty) empty.style.display = '';
         return;
     }
-    empty.style.display = 'none';
-    container.innerHTML = filtered.map(function(n) {
+    if (empty) empty.style.display = 'none';
+    container.innerHTML = filtered.map(function (n) {
         return '<a href="#/news/' + n.id + '" class="card news-card">' +
             '<div class="news-meta">' +
-            '<span class="tag tag-sm">' + (n.category || '其他') + '</span>' +
-            '<span class="small text-dim">' + n.date + '</span>' +
+            '<span class="tag tag-sm">' + esc(n.category || '其他') + '</span>' +
+            '<span class="small text-dim">' + esc(n.date) + '</span>' +
             '</div>' +
-            '<h3 class="news-title">' + n.title + '</h3>' +
-            '<p class="body" style="font-size:var(--text-small)">' + n.content + '</p></a>';
+            '<h3 class="news-title">' + esc(n.title) + '</h3>' +
+            '<p class="body" style="font-size:var(--text-small)">' + esc(n.content) + '</p></a>';
     }).join('');
 }
 
-function filterNews() {
-    const clicked = event.target;
+function filterNews(e) {
+    var clicked = (e && e.target) || event.target;
     if (clicked.dataset.cat === currentNewsFilter) {
         currentNewsFilter = '';
     } else {
         currentNewsFilter = clicked.dataset.cat;
     }
-    document.querySelectorAll('.news-filter-btn').forEach(function(btn) {
+    document.querySelectorAll('.news-filter-btn').forEach(function (btn) {
         btn.className = 'filter-btn news-filter-btn' + (btn.dataset.cat === currentNewsFilter ? ' active' : '');
     });
     renderNewsPage();
@@ -380,70 +519,73 @@ function filterNews() {
 
 // ===== Publications =====
 function renderHomePubs() {
-    const pubs = getData('publications');
-    const container = document.getElementById('home-pubs');
+    var pubs = getData('publications');
+    var container = document.getElementById('home-pubs');
     if (!container) return;
-    container.innerHTML = pubs.slice(0, 3).map(function(pub) {
+    container.innerHTML = pubs.slice(0, 3).map(function (pub) {
         return '<a href="#/publications" class="card pub-card" style="cursor:pointer">' +
-            '<span class="pub-year">' + pub.year + '</span>' +
-            '<div><div class="pub-title">' + pub.title + '</div>' +
-            '<p class="pub-authors">' + pub.authors + '</p>' +
-            '<p class="pub-journal">' + pub.journal + '</p></div></a>';
+            '<span class="pub-year">' + esc(String(pub.year)) + '</span>' +
+            '<div><div class="pub-title">' + esc(pub.title) + '</div>' +
+            '<p class="pub-authors">' + esc(pub.authors) + '</p>' +
+            '<p class="pub-journal">' + esc(pub.journal) + '</p></div></a>';
     }).join('');
 }
 
 function renderPubList() {
-    const pubs = getData('publications');
-    const list = document.getElementById('pub-list');
-    const empty = document.getElementById('pub-empty');
+    var pubs = getData('publications');
+    var list = document.getElementById('pub-list');
+    var empty = document.getElementById('pub-empty');
     if (!list) return;
-    const query = document.getElementById('search-input').value.toLowerCase();
-    const year = document.getElementById('year-select').value;
-    const filtered = pubs.filter(function(pub) {
+    var searchEl = document.getElementById('search-input');
+    var query = searchEl ? searchEl.value.toLowerCase() : '';
+    var yearEl = document.getElementById('year-select');
+    var year = yearEl ? yearEl.value : '';
+    var filtered = pubs.filter(function (pub) {
         var matchYear = !year || pub.year === parseInt(year);
-        var matchSearch = !query || pub.title.toLowerCase().includes(query) || pub.authors.toLowerCase().includes(query);
+        var matchSearch = !query || (pub.title && pub.title.toLowerCase().indexOf(query) > -1) || (pub.authors && pub.authors.toLowerCase().indexOf(query) > -1);
         return matchYear && matchSearch;
     });
     if (filtered.length === 0) {
         list.innerHTML = '';
-        empty.style.display = '';
+        if (empty) empty.style.display = '';
         return;
     }
-    empty.style.display = 'none';
-    list.innerHTML = filtered.map(function(pub) {
-        var doiHtml = pub.doi ? '<div class="pub-doi">DOI:<a href="https://doi.org/' + pub.doi + '" target="_blank"> ' + pub.doi + '</a></div>' : '';
+    if (empty) empty.style.display = 'none';
+    list.innerHTML = filtered.map(function (pub) {
+        var doiHtml = pub.doi ? '<div class="pub-doi">DOI:<a href="https://doi.org/' + esc(pub.doi) + '" target="_blank" rel="noopener"> ' + esc(pub.doi) + '</a></div>' : '';
         return '<div class="card pub-card">' +
-            '<span class="pub-year">' + pub.year + '</span>' +
-            '<div style="flex:1"><div class="pub-title">' + pub.title + '</div>' +
-            '<p class="pub-authors">' + pub.authors + '</p>' +
-            '<p class="pub-journal">' + pub.journal + '</p>' + doiHtml + '</div></div>';
+            '<span class="pub-year">' + esc(String(pub.year)) + '</span>' +
+            '<div style="flex:1"><div class="pub-title">' + esc(pub.title) + '</div>' +
+            '<p class="pub-authors">' + esc(pub.authors) + '</p>' +
+            '<p class="pub-journal">' + esc(pub.journal) + '</p>' + doiHtml + '</div></div>';
     }).join('');
 }
 
 function filterPubs() { renderPubList(); }
 
 function populateYearFilter() {
-    const pubs = getData('publications');
-    const select = document.getElementById('year-select');
+    var pubs = getData('publications');
+    var select = document.getElementById('year-select');
     if (!select) return;
-    var years = [...new Set(pubs.map(function(p) { return p.year; }))].sort(function(a, b) { return b - a; });
-    select.innerHTML = '<option value="">全部年份</option>' + years.map(function(y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
+    var years = [];
+    pubs.forEach(function (p) { if (years.indexOf(p.year) === -1) years.push(p.year); });
+    years.sort(function (a, b) { return b - a; });
+    select.innerHTML = '<option value="">全部年份</option>' + years.map(function (y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
 }
 
 function renderStats() {
-    const pubs = getData('publications');
-    const container = document.getElementById('pub-stats');
+    var pubs = getData('publications');
+    var container = document.getElementById('pub-stats');
     if (!container) return;
     container.innerHTML =
         '<div class="card stat-card" id="stat-total"><div class="stat-num" data-target="' + pubs.length + '">0</div><p class="small text-dim" style="margin-top:var(--space-sm)">发表论文总数</p></div>' +
         '<div class="card stat-card" id="stat-sci"><div class="stat-num" data-target="' + pubs.length + '">0</div><p class="small text-dim" style="margin-top:var(--space-sm)">SCI/EI收录</p></div>' +
         '<div class="card stat-card" id="stat-patent"><div class="stat-num" data-target="3">0</div><p class="small text-dim" style="margin-top:var(--space-sm)">发明专利</p></div>';
-    // Counter animation on scroll into view
     if ('IntersectionObserver' in window) {
-        var obs = new IntersectionObserver(function(entries) {
-            entries.forEach(function(e) {
+        var obs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
                 if (e.isIntersecting) {
-                    e.target.querySelectorAll('.stat-num').forEach(function(el) {
+                    e.target.querySelectorAll('.stat-num').forEach(function (el) {
                         var target = parseInt(el.dataset.target);
                         animateCounter(el, target, 1500);
                     });
@@ -455,15 +597,19 @@ function renderStats() {
     }
 }
 
+// ===== Contact Form =====
 function submitForm(e) {
     e.preventDefault();
     document.getElementById('form-success').style.display = '';
     e.target.reset();
 }
 
-// ===== Init =====
+// ===== Init — single authoritative entry point =====
 async function init() {
+    // Load all data first
     await loadData();
+
+    // Render everything once data is available
     renderCarousel();
     renderHomeTags();
     renderHomeResearch();
@@ -476,8 +622,29 @@ async function init() {
     populateYearFilter();
     renderPubList();
     renderStats();
+
+    // Set up initial route
     navigate(window.location.hash || '#/');
-    window.addEventListener('hashchange', function() { navigate(window.location.hash); });
+
+    // Event listeners
+    window.addEventListener('hashchange', function () { navigate(window.location.hash); });
+
+    window.addEventListener('scroll', function () {
+        document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+        document.getElementById('back-top').classList.toggle('show', window.scrollY > 400);
+    });
+
+    // Hide loader after animation completes
+    // Minimum 1.8s for branding, or after data loaded if later
+    var elapsed = performance.now();
+    var minDelay = Math.max(0, 1800 - elapsed);
+    setTimeout(function () {
+        var loader = document.getElementById('loader');
+        if (loader) loader.classList.add('hidden');
+        document.body.style.overflow = '';
+    }, minDelay);
 }
 
+// Set body overflow hidden until loader finishes
+document.body.style.overflow = 'hidden';
 init();

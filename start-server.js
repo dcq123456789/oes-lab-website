@@ -1,6 +1,8 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
+const crypto = require('crypto');
 const sharp = require('sharp');
 
 const PORT = 8080;
@@ -11,14 +13,107 @@ const MIME_TYPES = {
     '.json': 'application/json',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
     '.gif': 'image/gif',
     '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon'
+    '.ico': 'image/x-icon',
+    '.webp': 'image/webp',
+    '.woff2': 'font/woff2',
+    '.woff': 'font/woff'
 };
 
+// Cache policy per file type (seconds)
+function getCacheMaxAge(extname) {
+    const longCache = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.woff2', '.woff'];
+    if (longCache.indexOf(extname) !== -1) return 31536000; // 1 year for images/fonts (immutable)
+    if (extname === '.css') return 86400;   // 1 day for CSS
+    if (extname === '.js') return 3600;     // 1 hour for JS (changes frequently during dev)
+    if (extname === '.html') return 0;      // no cache for HTML
+    return 3600; // 1 hour default
+}
+
+// Auto-generate merged data.json after save
+function rebuildDataJSON() {
+    try {
+        const dataDir = path.join(__dirname, 'data');
+        const files = ['directions', 'members', 'publications', 'news', 'carousel'];
+        const result = {};
+        let allOk = true;
+        files.forEach(f => {
+            const filePath = path.join(dataDir, f + '.json');
+            try {
+                result[f] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            } catch(e) {
+                result[f] = [];
+                allOk = false;
+            }
+        });
+        fs.writeFileSync(path.join(dataDir, 'data.json'), JSON.stringify(result));
+        console.log('[auto] data.json regenerated (' + new Date().toLocaleTimeString() + ')');
+        return allOk;
+    } catch(e) {
+        console.error('[auto] Failed to rebuild data.json:', e.message);
+        return false;
+    }
+}
+
+function serveStatic(req, res, filePath) {
+    // ETag calculation
+    try {
+        const stat = fs.statSync(filePath);
+        const etag = crypto.createHash('md5')
+            .update(filePath + stat.mtime.getTime())
+            .digest('hex');
+
+        const ifNoneMatch = req.headers['if-none-match'];
+        if (ifNoneMatch === etag) {
+            res.writeHead(304, { 'ETag': etag });
+            res.end();
+            return;
+        }
+
+        const extname = String(path.extname(filePath)).toLowerCase();
+        const contentType = MIME_TYPES[extname] || 'application/octet-stream';
+        const maxAge = getCacheMaxAge(extname);
+
+        const content = fs.readFileSync(filePath);
+        const acceptEncoding = req.headers['accept-encoding'] || '';
+
+        // Gzip for compressible types
+        const compressible = ['.html', '.js', '.css', '.json', '.svg'].indexOf(extname) !== -1;
+        if (compressible && acceptEncoding.indexOf('gzip') !== -1) {
+            const gzipped = zlib.gzipSync(content);
+            res.writeHead(200, {
+                'Content-Type': contentType,
+                'Content-Encoding': 'gzip',
+                'Cache-Control': 'public, max-age=' + maxAge,
+                'ETag': etag
+            });
+            res.end(gzipped);
+            return;
+        }
+
+        res.writeHead(200, {
+            'Content-Type': contentType,
+            'Content-Length': content.length,
+            'Cache-Control': 'public, max-age=' + maxAge,
+            'ETag': etag
+        });
+        res.end(content);
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            res.writeHead(404, { 'Content-Type': 'text/html' });
+            res.end('<h1>404 Not Found</h1>', 'utf-8');
+        } else {
+            res.writeHead(500, { 'Content-Type': 'text/html' });
+            res.end('<h1>500 Internal Server Error</h1>', 'utf-8');
+        }
+    }
+}
+
 const server = http.createServer((req, res) => {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // CORS headers (for local admin only)
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8080');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -160,6 +255,8 @@ const server = http.createServer((req, res) => {
                         fs.writeFile(filePath, JSON.stringify(data[key], null, 2), 'utf-8', () => {
                             completed++;
                             if (completed === files.length) {
+                                // Auto-regenerate merged data.json for frontend
+                                rebuildDataJSON();
                                 res.writeHead(200, { 'Content-Type': 'application/json' });
                                 res.end(JSON.stringify({ success: true }));
                             }
@@ -167,6 +264,7 @@ const server = http.createServer((req, res) => {
                     } else {
                         completed++;
                         if (completed === files.length) {
+                            rebuildDataJSON();
                             res.writeHead(200, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify({ success: true }));
                         }
@@ -234,28 +332,22 @@ const server = http.createServer((req, res) => {
     let filePath = '.' + req.url;
     if (filePath === './') filePath = './index.html';
 
-    const extname = String(path.extname(filePath)).toLowerCase();
-    const contentType = MIME_TYPES[extname] || 'application/octet-stream';
+    serveStatic(req, res, filePath);
+});
 
-    fs.readFile(filePath, (error, content) => {
-        if (error) {
-            if (error.code === 'ENOENT') {
-                res.writeHead(404, { 'Content-Type': 'text/html' });
-                res.end('<h1>404 Not Found</h1>', 'utf-8');
-            } else {
-                res.writeHead(500, { 'Content-Type': 'text/html' });
-                res.end(`<h1>500 Internal Server Error</h1><p>${error.code}</p>`, 'utf-8');
-            }
-        } else {
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(content, 'utf-8');
-        }
-    });
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`\n[x] 端口 ${PORT} 已被占用，请先关闭占用进程后重试。`);
+        console.error(`[x] 运行: netstat -ano | findstr :${PORT}  查看占用 PID，然后 taskkill /F /PID <PID>\n`);
+        process.exit(1);
+    }
+    throw err;
 });
 
 server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}/`);
     console.log('按 ESC 退出');
+    rebuildDataJSON();
 });
 
 if (process.stdin.isTTY) {
