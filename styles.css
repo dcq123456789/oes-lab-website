@@ -167,6 +167,8 @@
             border-color: var(--accent-border);
             box-shadow: 0 8px 30px rgba(0,0,0,0.3), 0 0 40px var(--glow);
         }
+        /* 静态展示卡片不加弹起效果 */
+        .card-static:hover { transform: none; border-color: var(--border); box-shadow: none; }
         .card-compact { padding: var(--space-lg); }
         .card-lg { padding: var(--space-2xl); }
         .card-elevated { background: var(--bg-elevated); }
@@ -187,6 +189,11 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 30px var(--glow);
             filter: brightness(1.1);
+        }
+        .btn:active { transform: scale(0.95); filter: brightness(0.85); transition: all 0.05s; }
+        .btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
         }
         .btn-outline {
             background: transparent; color: var(--fg);
@@ -305,6 +312,7 @@
             box-shadow: var(--shadow-lg);
         }
         .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+        .nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
         .nav-dropdown-menu a {
             display: block; padding: 8px 20px; font-size: var(--text-small);
             color: var(--fg-muted); transition: all var(--duration-fast);
@@ -429,7 +437,7 @@
         .highlight-num { font-size: clamp(32px,4vw,48px); }
 
         /* Research card */
-        .research-card { display: grid; grid-template-columns: 280px 1fr; gap: 0; border-radius: var(--radius-xl); overflow: hidden; border: 1px solid var(--border); background: var(--bg-card); transition: transform var(--duration-normal) var(--ease-out-expo), border-color var(--duration-normal); }
+        .research-card { display: grid; grid-template-columns: 280px 1fr; gap: 0; border-radius: var(--radius-xl); overflow: hidden; border: 1px solid var(--border); background: var(--bg-card); transition: transform var(--duration-normal) var(--ease-out-expo), border-color var(--duration-normal); scroll-margin-top: 100px; }
         .research-card:hover { transform: translateY(-4px); border-color: var(--accent-border); }
         .research-visual { display: flex; align-items: center; justify-content: center; min-height: 240px; }
         .research-body { padding: var(--space-xl); }
@@ -591,5 +599,16 @@
             .research-card { border-radius: var(--radius-lg); }
             .noise-overlay { opacity: 0.015; }
             .cursor-outer, .cursor-inner { display: none; }
+        }
+
+        /* Accessibility: reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .hero-blob { animation: none; }
+            .hero-line span { animation: none; opacity: 1; transform: none; }
+            .scroll-indicator { animation: none; }
+            .scroll-line { animation: none; }
+            *,
+            *::before,
+            *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
     

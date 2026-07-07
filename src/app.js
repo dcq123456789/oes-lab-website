@@ -89,8 +89,17 @@ function navigate(hash) {
         }
     } else if (parts[0] === 'research') {
         if (!_rendered.research) { renderResearchDetail(); _rendered.research = true; }
-        showPage('research');
-        document.title = PAGES.research.title;
+        if (parts[1]) {
+            var rid = parseInt(parts[1]);
+            showPage('research-detail-page');
+            showResearchDetail(rid);
+            var directions = getData('directions');
+            var rd = directions.find(function (x) { return x.id === rid; });
+            document.title = rd ? 'OES实验室 - ' + rd.title : PAGES.research.title;
+        } else {
+            showPage('research');
+            document.title = PAGES.research.title;
+        }
     } else if (parts[0] === 'publications') {
         if (!_rendered.publications) { populateYearFilter(); renderPubList(); renderStats(); _rendered.publications = true; }
         showPage('publications');
@@ -276,6 +285,18 @@ function renderHomeTags() {
     }).join('');
 }
 
+// ===== Research Nav Menu (top nav dropdown) =====
+function renderNavResearchMenu() {
+    var menu = document.getElementById('nav-research-menu');
+    if (!menu) return;
+    var directions = getData('directions');
+    menu.innerHTML = '<a href="#/research">全部方向</a>' +
+        directions.map(function (d) {
+            var label = d.title.split('——')[0].trim();
+            return '<a href="#/research" onclick="setTimeout(function(){scrollToResearch(\'' + label + '\');}, 50)">' + esc(label) + '</a>';
+        }).join('');
+}
+
 // ===== Home Research =====
 function renderHomeResearch() {
     var directions = getData('directions');
@@ -296,20 +317,73 @@ function renderHomeResearch() {
 function renderResearchDetail() {
     var directions = getData('directions');
     var container = document.getElementById('research-detail');
+    var nav = document.getElementById('research-dir-nav');
     if (!container) return;
+
+    // Render directory nav buttons
+    if (nav) {
+        nav.innerHTML = directions.map(function (d) {
+            var label = d.title.split('——')[0].trim();
+            return '<button onclick="scrollToResearch(\'' + label + '\')" class="filter-btn" style="font-size:var(--text-small)">' + esc(label) + '</button>';
+        }).join('');
+    }
+
+    // Render research cards with anchor IDs
     container.innerHTML = directions.map(function (d) {
         var items = d.subItems || [];
+        var label = d.title.split('——')[0].trim();
+        var shortDesc = d.description.length > 80 ? d.description.slice(0, 80) + '…' : d.description;
+        var previewItems = items.slice(0, 3);
+        var moreCount = items.length - 3;
         var iconHtml = d.image
-            ? '<img src="' + esc(d.image) + '" loading="lazy" width="140" height="140" alt="" style="object-fit:cover;border-radius:var(--radius-xl)">'
-            : '<div style="width:140px;height:140px;border-radius:var(--radius-xl);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:56px">' + esc(d.icon) + '</div>';
-        return '<div class="research-card">' +
-            '<div class="research-visual" style="background:' + (d.bgColor || 'var(--bg-card)') + '">' + iconHtml + '</div>' +
-            '<div class="research-body">' +
+            ? '<img src="' + esc(d.image) + '" loading="lazy" width="100" height="100" alt="" style="width:100px;height:100px;object-fit:cover;border-radius:var(--radius-lg)">'
+            : '<div style="width:100px;height:100px;border-radius:var(--radius-lg);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:40px">' + esc(d.icon) + '</div>';
+        return '<a href="#/research/' + d.id + '" class="research-card" id="research-' + label + '" style="text-decoration:none;color:inherit;display:flex;gap:var(--space-xl);align-items:center;cursor:pointer;transition:transform 0.2s;padding:var(--space-lg)" onmouseenter="this.style.transform=\'translateY(-4px)\'" onmouseleave="this.style.transform=\'translateY(0)\'">' +
+            '<div class="research-visual" style="background:' + (d.bgColor || 'var(--bg-card)') + ';display:flex;align-items:center;justify-content:center;width:140px;height:140px;border-radius:var(--radius-xl);flex-shrink:0">' + iconHtml + '</div>' +
+            '<div class="research-body" style="flex:1;min-width:0">' +
             '<h2>' + esc(d.title) + '</h2>' +
-            '<p class="body" style="margin-bottom:var(--space-md)">' + esc(d.description) + '</p>' +
-            '<ul>' + items.map(function (item) { return '<li>' + esc(item) + '</li>'; }).join('') + '</ul>' +
-            '</div></div>';
+            '<p class="body" style="margin-bottom:var(--space-sm);color:var(--fg-dim)">' + esc(shortDesc) + '</p>' +
+            '<div class="flex flex-wrap gap-sm" style="margin-bottom:var(--space-sm)">' +
+            previewItems.map(function (item) { return '<span class="tag tag-sm" style="font-size:11px">' + esc(item) + '</span>'; }).join('') +
+            (moreCount > 0 ? '<span class="tag tag-sm" style="font-size:11px;background:var(--accent);color:#fff">+' + moreCount + '</span>' : '') +
+            '</div>' +
+            '<span class="text-accent small fw-500">查看详情 →</span>' +
+            '</div></a>';
     }).join('');
+}
+
+// ===== Research Detail Page =====
+function showResearchDetail(id) {
+    var directions = getData('directions');
+    var d = directions.find(function (x) { return x.id === id; });
+    if (!d) return;
+    var items = d.subItems || [];
+    var visual = d.image
+        ? '<img src="' + esc(d.image) + '" alt="" style="width:200px;height:200px;object-fit:cover;border-radius:var(--radius-xl);display:block;margin:0 auto var(--space-xl)">'
+        : '<div style="width:200px;height:200px;border-radius:var(--radius-xl);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:80px;color:#fff;margin:0 auto var(--space-xl)">' + esc(d.icon) + '</div>';
+    document.getElementById('research-detail-content').innerHTML =
+        visual +
+        '<h1 class="h1" style="text-align:center;margin-bottom:var(--space-md)">' + esc(d.title) + '</h1>' +
+        '<p class="body" style="text-align:center;color:var(--fg-muted);max-width:600px;margin:0 auto var(--space-2xl);line-height:1.8">' + esc(d.description) + '</p>' +
+        '<div style="max-width:800px;margin:0 auto">' +
+        '<h2 class="h3" style="margin-bottom:var(--space-lg);padding-bottom:var(--space-sm);border-bottom:2px solid var(--accent);display:inline-block">研究内容</h2>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-md);margin-top:var(--space-lg)">' +
+        items.map(function (item, i) {
+            return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-lg);display:flex;align-items:flex-start;gap:var(--space-md)" onmouseenter="this.style.borderColor=\'var(--accent)\'" onmouseleave="this.style.borderColor=\'var(--border)\'">' +
+                '<span style="background:var(--accent);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0">' + (i + 1) + '</span>' +
+                '<span style="font-size:var(--text-small);line-height:1.6">' + esc(item) + '</span>' +
+                '</div>';
+        }).join('') +
+        '</div>' +
+        '<a href="#/research" style="display:inline-flex;align-items:center;gap:var(--space-sm);color:var(--accent);font-weight:500;font-size:var(--text-small);margin-top:var(--space-2xl)">← 返回研究方向列表</a>' +
+        '</div>';
+}
+
+function scrollToResearch(label) {
+    var el = document.getElementById('research-' + label);
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 // ===== Home Team =====
@@ -593,6 +667,7 @@ async function init() {
     // Only render above-the-fold + home page content immediately
     renderCarousel();
     renderHomeTags();
+    renderNavResearchMenu();
     renderHomeResearch();
     renderHomeTeam();
     renderHomeNews();

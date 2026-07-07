@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
-    <link rel="stylesheet" href="./styles.css?v=3">
+    <link rel="stylesheet" href="./styles.css?v=5">
 </head>
 <body>
 
@@ -46,11 +46,8 @@
                     研究方向
                     <svg class="dropdown-arrow" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3l3 4 3-4"/></svg>
                 </a>
-                <div class="nav-dropdown-menu">
+                <div class="nav-dropdown-menu" id="nav-research-menu">
                     <a href="#/research">全部方向</a>
-                    <a href="#/research">光学技术</a>
-                    <a href="#/research">电学技术</a>
-                    <a href="#/research">传感技术</a>
                 </div>
             </div>
 
@@ -216,7 +213,21 @@
                     <h1 class="h1">核心研究方向</h1>
                     <p class="body" style="margin-top:var(--space-sm)">覆盖前沿技术领域</p>
                 </div>
+                <div id="research-dir-nav" style="display:flex;justify-content:center;gap:var(--space-sm);margin-bottom:var(--space-xl);flex-wrap:wrap"></div>
                 <div id="research-detail" style="display:flex;flex-direction:column;gap:var(--space-2xl)"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== RESEARCH DETAIL ===== -->
+    <div id="research-detail-page" class="page">
+        <section class="section" style="min-height:100vh;padding-top:120px">
+            <div class="container">
+                <a href="#/research" class="btn btn-ghost" style="margin-bottom:var(--space-lg);display:inline-flex">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+                    返回研究方向
+                </a>
+                <div id="research-detail-content"></div>
             </div>
         </section>
     </div>
@@ -393,6 +404,6 @@
         <p class="footer-text"><small>&copy; 2026 OES实验室</small></p>
     </footer>
 
-    <script src="./src/app.js?v=5"></script>
+    <script src="./src/app.js?v=10"></script>
 </body>
 </html>
