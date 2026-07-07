@@ -33,9 +33,9 @@ function rebuildDataJSON() {
 }
 
 // Minimal static file server — only for admin.html and uploaded images (admin previews)
-function serveFile(res, filePath) {
+function serveFile(req, res, filePath) {
     try {
-        const content = fs.readFileSync(filePath);
+        const stat = fs.statSync(filePath);
         const ext = path.extname(filePath).toLowerCase();
         const mime = {
             '.html': 'text/html; charset=utf-8',
@@ -50,7 +50,32 @@ function serveFile(res, filePath) {
             '.webp': 'image/webp',
             '.ico':  'image/x-icon'
         }[ext] || 'application/octet-stream';
-        res.writeHead(200, { 'Content-Type': mime });
+
+        // ETag: based on file path + modification time (changes when file is edited)
+        const etag = '"' + Buffer.from(filePath + stat.mtime.getTime().toString()).toString('base64').slice(0, 27) + '"';
+
+        const headers = { 'Content-Type': mime };
+
+        // 304 if ETag matches (browser has latest version)
+        if (req.headers['if-none-match'] === etag) {
+            res.writeHead(304, headers);
+            res.end();
+            return;
+        }
+
+        headers['ETag'] = etag;
+
+        // Cache strategy per file type
+        if (ext === '.json') {
+            headers['Cache-Control'] = 'no-cache';              // data.json: always revalidate
+        } else if (ext === '.html' || ext === '.js' || ext === '.css') {
+            headers['Cache-Control'] = 'public, max-age=0, must-revalidate';  // code: ask server if changed
+        } else {
+            headers['Cache-Control'] = 'public, max-age=86400'; // images: cache 1 day
+        }
+
+        const content = fs.readFileSync(filePath);
+        res.writeHead(200, headers);
         res.end(content);
     } catch (err) {
         res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -251,22 +276,22 @@ const server = http.createServer((req, res) => {
     // Serve admin.html at root (or /admin.html) when SERVE_FRONTEND is off
     // When SERVE_FRONTEND is on, root serves index.html instead
     if (urlPath === '/') {
-        return serveFile(res, path.join(__dirname, SERVE_FRONTEND ? 'index.html' : 'admin.html'));
+        return serveFile(req, res, path.join(__dirname, SERVE_FRONTEND ? 'index.html' : 'admin.html'));
     }
     if (urlPath === '/admin.html') {
-        return serveFile(res, path.join(__dirname, 'admin.html'));
+        return serveFile(req, res, path.join(__dirname, 'admin.html'));
     }
 
     // Serve uploaded images (used in admin previews)
     if (urlPath.startsWith('/image/')) {
-        return serveFile(res, path.join(__dirname, urlPath));
+        return serveFile(req, res, path.join(__dirname, urlPath));
     }
 
     // When SERVE_FRONTEND is on, serve frontend static files
     if (SERVE_FRONTEND) {
         const frontendFiles = ['/index.html', '/styles.css', '/src/app.js', '/data/data.json', '/data/messages.json'];
         if (frontendFiles.indexOf(urlPath) !== -1 || urlPath.startsWith('/image/')) {
-            return serveFile(res, path.join(__dirname, urlPath));
+            return serveFile(req, res, path.join(__dirname, urlPath));
         }
     }
 

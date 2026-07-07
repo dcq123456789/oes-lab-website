@@ -386,7 +386,7 @@
       "desc": "探索激光、光纤传感与光谱分析的最新突破",
       "bg": "from-blue-600 to-sky-400",
       "icon": "O",
-      "image": "image/1783415456291.jpg",
+      "image": "",
       "link": "#research",
       "sortOrder": 0
     },
@@ -396,7 +396,7 @@
       "desc": "微电子器件与集成电路设计的创新应用",
       "bg": "from-indigo-600 to-purple-400",
       "icon": "E",
-      "image": "",
+      "image": "image/1783416784098.jpg",
       "link": "",
       "sortOrder": 1
     },

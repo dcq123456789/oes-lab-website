@@ -12,7 +12,7 @@ async function loadData() {
     var files = ['directions', 'members', 'publications', 'news', 'carousel'];
 
     try {
-        var res = await fetch('./data/data.json');
+        var res = await fetch('./data/data.json', { cache: 'reload' });
         var merged = await res.json();
         for (var k in merged) {
             if (merged.hasOwnProperty(k)) DATA[k] = merged[k];
@@ -227,14 +227,16 @@ function renderCarousel() {
     var items = getCarouselItems();
     track.innerHTML = items.map(function (item) {
         var bgStyle = '';
+        var bgImg = '';
         if (item.image) {
-            bgStyle = 'background-image:url(\'' + esc(item.image) + '\');background-size:cover;background-position:center;';
+            bgImg = '<img src="' + esc(item.image) + '" alt="" class="carousel-bg-img">';
         } else {
-            bgStyle = 'background:' + parseBg(item.bg) + ';';
+            bgStyle = ' style="background:' + parseBg(item.bg) + ';"';
         }
-        var overlay = item.image ? '<div class="carousel-overlay"></div>' : '<div class="carousel-overlay" style="background:rgba(0,0,0,0.2)"></div>';
+        var overlay = item.image ? '<div class="carousel-overlay" style="background:rgba(0,0,0,0.25)"></div>' : '<div class="carousel-overlay" style="background:rgba(0,0,0,0.2)"></div>';
         var clickHandler = item.link ? (item.link.startsWith('#') ? ' onclick="window.location.href=\'' + esc(item.link) + '\'"' : ' onclick="window.open(\'' + esc(item.link) + '\',\'_blank\')"') : '';
-        return '<div class="carousel-slide' + (item.link ? ' carousel-linked' : '') + '" style="' + bgStyle + '"' + clickHandler + ' role="group" aria-roledescription="slide" aria-label="' + esc(item.title) + '">' +
+        return '<div class="carousel-slide' + (item.link ? ' carousel-linked' : '') + '"' + bgStyle + clickHandler + ' role="group" aria-roledescription="slide" aria-label="' + esc(item.title) + '">' +
+            bgImg +
             overlay +
             '<div class="carousel-content">' +
             '<div class="carousel-icon">' + esc(item.icon) + '</div>' +

@@ -403,6 +403,7 @@
 .carousel-track { display: flex; transition: transform 0.5s ease; }
 .carousel-track > * { flex: 0 0 100%; min-width: 0; }
 .carousel-slide { min-height: 360px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: default; }
+        .carousel-bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
 .carousel-linked { cursor: pointer; }
 .carousel-linked:hover { filter: brightness(1.08); }
         .carousel-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); z-index: 1; }
