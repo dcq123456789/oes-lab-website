@@ -572,24 +572,21 @@ function submitForm(e) {
     e.target.reset();
 }
 
+// Lazy-render flags: hidden pages only render on first access
+var _rendered = {};
+
 // ===== Init — single authoritative entry point =====
 async function init() {
     // Load all data first
     await loadData();
 
-    // Render everything once data is available
+    // Only render above-the-fold + home page content immediately
     renderCarousel();
     renderHomeTags();
     renderHomeResearch();
     renderHomeTeam();
     renderHomeNews();
     renderHomePubs();
-    renderResearchDetail();
-    renderMemberList();
-    renderNewsPage();
-    populateYearFilter();
-    renderPubList();
-    renderStats();
 
     // Set up initial route
     navigate(window.location.hash || '#/');
