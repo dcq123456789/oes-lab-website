@@ -7,50 +7,18 @@ let carouselIndex = 0;
 let carouselTimer;
 
 // ===== Data Loader =====
-// Primary: load individual files (most reliable, works everywhere)
-// Fallback: try merged data.json (optimization for production deployment)
+// Load merged data.json directly
 async function loadData() {
     var files = ['directions', 'members', 'publications', 'news', 'carousel'];
-    var loaded = 0;
 
-    // Load all files in parallel
-    var promises = files.map(function (file) {
-        return fetch('./data/' + file + '.json')
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                DATA[file] = data;
-                loaded++;
-            })
-            .catch(function (e) {
-                console.warn('Failed to load ' + file + '.json, trying merged...');
-                // If individual file fails, try merged data.json as fallback
-                return fetch('./data/data.json')
-                    .then(function (r) { return r.json(); })
-                    .then(function (merged) {
-                        for (var k in merged) {
-                            if (merged.hasOwnProperty(k)) DATA[k] = merged[k];
-                        }
-                    })
-                    .catch(function () {
-                        DATA[file] = [];
-                    });
-            });
-    });
-
-    await Promise.all(promises);
-
-    // If nothing loaded, try merged file as last resort
-    if (loaded === 0) {
-        try {
-            var res = await fetch('./data/data.json');
-            var merged = await res.json();
-            for (var k in merged) {
-                if (merged.hasOwnProperty(k)) DATA[k] = merged[k];
-            }
-            console.log('Loaded data from merged data.json');
-        } catch (e) {
-            console.error('Failed to load any data source', e);
+    try {
+        var res = await fetch('./data/data.json');
+        var merged = await res.json();
+        for (var k in merged) {
+            if (merged.hasOwnProperty(k)) DATA[k] = merged[k];
         }
+    } catch (e) {
+        console.error('Failed to load data.json', e);
     }
 
     // Ensure all keys exist

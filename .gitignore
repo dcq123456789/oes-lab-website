@@ -2,4 +2,6 @@ node_modules/
 .DS_Store
 *.zip
 config/admin.json
-.workbuddy/
+data/oes.db
+server-error.log
+server-output.log

@@ -1,118 +1,61 @@
+// ===== OES Lab Admin Server (Local Only) =====
+// Serves: admin.html + APIs (load, save, upload, login, git-push)
+// Frontend (index.html, styles.css, app.js) → deployed to cloud separately
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const zlib = require('zlib');
-const crypto = require('crypto');
 const sharp = require('sharp');
+const db = require('./server/db');
 
 const PORT = 8080;
-const MIME_TYPES = {
-    '.html': 'text/html',
-    '.js': 'text/javascript',
-    '.css': 'text/css',
-    '.json': 'application/json',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.gif': 'image/gif',
-    '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon',
-    '.webp': 'image/webp',
-    '.woff2': 'font/woff2',
-    '.woff': 'font/woff'
-};
 
-// Cache policy per file type (seconds)
-function getCacheMaxAge(extname) {
-    const longCache = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.woff2', '.woff'];
-    if (longCache.indexOf(extname) !== -1) return 31536000; // 1 year for images/fonts (immutable)
-    if (extname === '.css') return 86400;   // 1 day for CSS
-    if (extname === '.js') return 3600;     // 1 hour for JS (changes frequently during dev)
-    if (extname === '.html') return 0;      // no cache for HTML
-    return 3600; // 1 hour default
-}
-
-// Auto-generate merged data.json after save
+// Auto-generate merged data.json from database (committed to git → cloud deployment)
 function rebuildDataJSON() {
     try {
-        const dataDir = path.join(__dirname, 'data');
-        const files = ['directions', 'members', 'publications', 'news', 'carousel'];
-        const result = {};
-        let allOk = true;
-        files.forEach(f => {
-            const filePath = path.join(dataDir, f + '.json');
-            try {
-                result[f] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-            } catch(e) {
-                result[f] = [];
-                allOk = false;
-            }
-        });
-        fs.writeFileSync(path.join(dataDir, 'data.json'), JSON.stringify(result));
+        const all = db.getAllTables();
+        const frontend = {
+            directions: all.directions || [],
+            members: all.members || [],
+            publications: all.publications || [],
+            news: all.news || [],
+            carousel: all.carousel || []
+        };
+        fs.writeFileSync(path.join(__dirname, 'data', 'data.json'), JSON.stringify(frontend, null, 2));
         console.log('[auto] data.json regenerated (' + new Date().toLocaleTimeString() + ')');
-        return allOk;
+        return true;
     } catch(e) {
         console.error('[auto] Failed to rebuild data.json:', e.message);
         return false;
     }
 }
 
-function serveStatic(req, res, filePath) {
-    // ETag calculation
+// Minimal static file server — only for admin.html and uploaded images (admin previews)
+function serveFile(res, filePath) {
     try {
-        const stat = fs.statSync(filePath);
-        const etag = crypto.createHash('md5')
-            .update(filePath + stat.mtime.getTime())
-            .digest('hex');
-
-        const ifNoneMatch = req.headers['if-none-match'];
-        if (ifNoneMatch === etag) {
-            res.writeHead(304, { 'ETag': etag });
-            res.end();
-            return;
-        }
-
-        const extname = String(path.extname(filePath)).toLowerCase();
-        const contentType = MIME_TYPES[extname] || 'application/octet-stream';
-        const maxAge = getCacheMaxAge(extname);
-
         const content = fs.readFileSync(filePath);
-        const acceptEncoding = req.headers['accept-encoding'] || '';
-
-        // Gzip for compressible types
-        const compressible = ['.html', '.js', '.css', '.json', '.svg'].indexOf(extname) !== -1;
-        if (compressible && acceptEncoding.indexOf('gzip') !== -1) {
-            const gzipped = zlib.gzipSync(content);
-            res.writeHead(200, {
-                'Content-Type': contentType,
-                'Content-Encoding': 'gzip',
-                'Cache-Control': 'public, max-age=' + maxAge,
-                'ETag': etag
-            });
-            res.end(gzipped);
-            return;
-        }
-
-        res.writeHead(200, {
-            'Content-Type': contentType,
-            'Content-Length': content.length,
-            'Cache-Control': 'public, max-age=' + maxAge,
-            'ETag': etag
-        });
+        const ext = path.extname(filePath).toLowerCase();
+        const mime = {
+            '.html': 'text/html; charset=utf-8',
+            '.js':   'text/javascript',
+            '.css':  'text/css',
+            '.json': 'application/json',
+            '.jpg':  'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png':  'image/png',
+            '.svg':  'image/svg+xml',
+            '.gif':  'image/gif',
+            '.webp': 'image/webp',
+            '.ico':  'image/x-icon'
+        }[ext] || 'application/octet-stream';
+        res.writeHead(200, { 'Content-Type': mime });
         res.end(content);
     } catch (err) {
-        if (err.code === 'ENOENT') {
-            res.writeHead(404, { 'Content-Type': 'text/html' });
-            res.end('<h1>404 Not Found</h1>', 'utf-8');
-        } else {
-            res.writeHead(500, { 'Content-Type': 'text/html' });
-            res.end('<h1>500 Internal Server Error</h1>', 'utf-8');
-        }
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<h1>404 Not Found</h1>');
     }
 }
 
 const server = http.createServer((req, res) => {
-    // CORS headers (for local admin only)
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8080');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -123,28 +66,15 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // API: Load all data
+    // ---- API: Load all data ----
     if (req.url === '/api/load' && req.method === 'GET') {
-        const dataDir = path.join(__dirname, 'data');
-        const result = {};
-        const files = ['directions.json', 'members.json', 'publications.json', 'news.json', 'messages.json', 'carousel.json'];
-        let completed = 0;
-        files.forEach(file => {
-            const filePath = path.join(dataDir, file);
-            fs.readFile(filePath, 'utf-8', (err, content) => {
-                const key = file.replace('.json', '');
-                result[key] = err ? [] : JSON.parse(content);
-                completed++;
-                if (completed === files.length) {
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify(result));
-                }
-            });
-        });
+        const all = db.getAllTables();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(all));
         return;
     }
 
-    // API: Login
+    // ---- API: Login ----
     if (req.url === '/api/login' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
@@ -173,7 +103,7 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // API: Upload image (auto-compress to ~20KB)
+    // ---- API: Upload image (auto-compress) ----
     if (req.url === '/api/upload' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
@@ -192,7 +122,6 @@ const server = http.createServer((req, res) => {
                 const base64Data = data.replace(/^data:image\/\w+;base64,/, '');
                 const buf = Buffer.from(base64Data, 'base64');
 
-                // Skip compress if already under 20KB
                 if (buf.length <= 20000) {
                     fs.writeFile(filePath, buf, (err2) => {
                         if (err2) {
@@ -239,37 +168,21 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // API: Save all data
+    // ---- API: Save all data ----
     if (req.url === '/api/save' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
             try {
                 const data = JSON.parse(body);
-                const dataDir = path.join(__dirname, 'data');
-                const files = ['directions', 'members', 'publications', 'news', 'messages', 'carousel'];
-                let completed = 0;
-                files.forEach(key => {
-                    if (data[key]) {
-                        const filePath = path.join(dataDir, `${key}.json`);
-                        fs.writeFile(filePath, JSON.stringify(data[key], null, 2), 'utf-8', () => {
-                            completed++;
-                            if (completed === files.length) {
-                                // Auto-regenerate merged data.json for frontend
-                                rebuildDataJSON();
-                                res.writeHead(200, { 'Content-Type': 'application/json' });
-                                res.end(JSON.stringify({ success: true }));
-                            }
-                        });
-                    } else {
-                        completed++;
-                        if (completed === files.length) {
-                            rebuildDataJSON();
-                            res.writeHead(200, { 'Content-Type': 'application/json' });
-                            res.end(JSON.stringify({ success: true }));
-                        }
-                    }
-                });
+                db.saveAllTables(data);
+                if (data.messages !== undefined) {
+                    const msgPath = path.join(__dirname, 'data', 'messages.json');
+                    fs.writeFileSync(msgPath, JSON.stringify(data.messages, null, 2), 'utf-8');
+                }
+                rebuildDataJSON();
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true }));
             } catch (err) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, error: err.message }));
@@ -278,7 +191,7 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // API: Git push to GitHub
+    // ---- API: Git push ----
     if (req.url === '/api/git-push' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
@@ -329,10 +242,22 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    let filePath = '.' + req.url;
-    if (filePath === './') filePath = './index.html';
+    // ---- Admin static files (admin.html + uploaded images for preview) ----
+    const urlPath = req.url.split('?')[0];
 
-    serveStatic(req, res, filePath);
+    // Serve admin.html at root
+    if (urlPath === '/' || urlPath === '/admin.html') {
+        return serveFile(res, path.join(__dirname, 'admin.html'));
+    }
+
+    // Serve uploaded images (used in admin previews)
+    if (urlPath.startsWith('/image/')) {
+        return serveFile(res, path.join(__dirname, urlPath));
+    }
+
+    // Everything else: 404 (frontend is on cloud, not served locally)
+    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end('<h1>404 - 此前台页面部署在云端</h1>');
 });
 
 server.on('error', (err) => {
@@ -344,17 +269,34 @@ server.on('error', (err) => {
     throw err;
 });
 
-server.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}/`);
-    console.log('按 ESC 退出');
+// Initialize database then start server
+(async () => {
+    await db.initDB();
+    if (!db.hasData()) {
+        console.log('[db] Empty database, migrating from JSON files...');
+        db.migrateFromJSON();
+    }
     rebuildDataJSON();
-});
+
+    server.listen(PORT, () => {
+        console.log('┌─────────────────────────────────────────────┐');
+        console.log('│  OES 管理后台 (本地运行)                      │');
+        console.log('│                                             │');
+        console.log(`│  后台:  http://localhost:${PORT}/               │`);
+        console.log('│  前台:  部署在云端 (GitHub Pages / Vercel)     │');
+        console.log('│                                             │');
+        console.log('│  编辑 → 保存 → 推送至 GitHub → 云端自动更新    │');
+        console.log('│  按 ESC 退出                                 │');
+        console.log('└─────────────────────────────────────────────┘');
+    });
+})();
 
 if (process.stdin.isTTY) {
     process.stdin.setRawMode(true);
     process.stdin.on('data', key => {
         if (key[0] === 27) { // ESC
             process.stdin.setRawMode(false);
+            db.close();
             process.exit();
         }
     });

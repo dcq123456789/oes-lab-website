@@ -513,6 +513,13 @@
             return arr.length > 0 ? Math.max(...arr.map(i => i.id)) + 1 : 1;
         }
 
+        function esc(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
         // ===== 登录 =====
         async function login(e) {
             e.preventDefault();
@@ -579,17 +586,17 @@
                 const imgStyle = c.image ? `background-image: url('${c.image}'); background-size: cover; background-position: center;` : '';
                 const preview = c.image
                     ? `<div class="w-24 h-16 rounded-lg flex-shrink-0" style="${imgStyle}"></div>`
-                    : `<div class="w-24 h-16 ${c.bg.replace('from-', 'bg-').replace(' to-*', '')} rounded-lg flex items-center justify-center text-white text-xl font-bold flex-shrink-0">${c.icon}</div>`;
+                    : `<div class="w-24 h-16 ${c.bg.replace('from-', 'bg-').replace(' to-*', '')} rounded-lg flex items-center justify-center text-white text-xl font-bold flex-shrink-0">${esc(c.icon)}</div>`;
                 return `
                 <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-start justify-between">
                     <div class="flex items-start gap-4">
                         ${preview}
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="font-bold">${c.title}</h3>
+                                <h3 class="font-bold">${esc(c.title)}</h3>
                                 <span class="text-gray-400 text-sm">排序 ${c.sortOrder}</span>
                             </div>
-                            <p class="text-gray-500 text-sm mt-1">${c.desc}</p>
+                            <p class="text-gray-500 text-sm mt-1">${esc(c.desc)}</p>
                         </div>
                     </div>
                     <div class="flex gap-2 flex-shrink-0">
@@ -728,17 +735,17 @@
                 const imgStyle = d.image ? `background-image: url('${d.image}'); background-size: cover; background-position: center;` : '';
                 const iconHtml = d.image
                     ? `<div class="w-20 h-20 rounded-xl flex-shrink-0" style="${imgStyle}"></div>`
-                    : `<div class="w-20 h-20 ${d.bgColor} rounded-xl flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">${d.icon}</div>`;
+                    : `<div class="w-20 h-20 ${d.bgColor} rounded-xl flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">${esc(d.icon)}</div>`;
                 return `
                 <div class="bg-white rounded-xl border border-gray-200 p-6">
                     <div class="flex items-start justify-between">
                         <div class="flex items-start gap-4">
                             ${iconHtml}
                             <div>
-                                <h3 class="text-lg font-bold">${d.title}</h3>
-                                <p class="text-gray-600 mt-1">${d.description}</p>
+                                <h3 class="text-lg font-bold">${esc(d.title)}</h3>
+                                <p class="text-gray-600 mt-1">${esc(d.description)}</p>
                                 <div class="flex flex-wrap gap-2 mt-2">
-                                    ${items.map(i => `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">${i}</span>`).join('')}
+                                    ${items.map(i => `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">${esc(i)}</span>`).join('')}
                                 </div>
                             </div>
                         </div>
@@ -868,14 +875,14 @@
             document.getElementById('members-list').innerHTML = data.members.map(m => `
                 <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        ${m.photo ? `<img src="${m.photo}" alt="${m.name}" class="w-16 h-16 rounded-full object-cover flex-shrink-0">` : `<div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">${m.name.charAt(0)}</div>`}
+                        ${m.photo ? `<img src="${m.photo}" alt="${esc(m.name)}" class="w-16 h-16 rounded-full object-cover flex-shrink-0">` : `<div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">${esc(m.name.charAt(0))}</div>`}
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="font-bold">${m.name}</h3>
-                                <span class="${catColors[m.category] || 'bg-gray-100 text-gray-600'} text-xs px-2 py-0.5 rounded">${m.category}</span>
+                                <h3 class="font-bold">${esc(m.name)}</h3>
+                                <span class="${catColors[m.category] || 'bg-gray-100 text-gray-600'} text-xs px-2 py-0.5 rounded">${esc(m.category)}</span>
                             </div>
-                            <p class="text-primary text-sm">${m.role}</p>
-                            <p class="text-gray-500 text-sm">${m.bio}</p>
+                            <p class="text-primary text-sm">${esc(m.role)}</p>
+                            <p class="text-gray-500 text-sm">${esc(m.bio)}</p>
                         </div>
                     </div>
                     <div class="flex gap-2">
@@ -1015,10 +1022,10 @@
                     <div class="flex gap-3">
                         <span class="bg-primary text-white px-2 py-1 rounded text-sm font-semibold h-fit">${p.year}</span>
                         <div>
-                            <h3 class="font-bold">${p.title}</h3>
-                            <p class="text-gray-500 text-sm mt-1">${p.authors}</p>
-                            <p class="text-primary text-sm font-medium">${p.journal}</p>
-                            ${p.doi ? `<p class="text-gray-400 text-xs mt-1">DOI: ${p.doi}</p>` : ''}
+                            <h3 class="font-bold">${esc(p.title)}</h3>
+                            <p class="text-gray-500 text-sm mt-1">${esc(p.authors)}</p>
+                            <p class="text-primary text-sm font-medium">${esc(p.journal)}</p>
+                            ${p.doi ? `<p class="text-gray-400 text-xs mt-1">DOI: ${esc(p.doi)}</p>` : ''}
                         </div>
                     </div>
                     <div class="flex gap-2 flex-shrink-0">
@@ -1082,11 +1089,11 @@
                 <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-start justify-between">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="${colors[n.category] || colors['其他']} text-xs px-2 py-0.5 rounded font-medium">${n.category}</span>
-                            <span class="text-gray-400 text-sm">${n.date}</span>
+                            <span class="${colors[n.category] || colors['其他']} text-xs px-2 py-0.5 rounded font-medium">${esc(n.category)}</span>
+                            <span class="text-gray-400 text-sm">${esc(n.date)}</span>
                         </div>
-                        <h3 class="font-bold">${n.title}</h3>
-                        <p class="text-gray-500 text-sm mt-1">${n.content}</p>
+                        <h3 class="font-bold">${esc(n.title)}</h3>
+                        <p class="text-gray-500 text-sm mt-1">${esc(n.content)}</p>
                     </div>
                     <div class="flex gap-2 flex-shrink-0">
                         <button onclick='editNews(${n.id})' class="text-primary hover:text-primary-dark text-sm font-medium">编辑</button>
@@ -1148,12 +1155,12 @@
                     <div class="flex justify-between items-start">
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="font-bold">${m.name}</h3>
+                                <h3 class="font-bold">${esc(m.name)}</h3>
                                 ${!m.isRead ? '<span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded">新</span>' : ''}
                             </div>
-                            <p class="text-gray-500 text-sm">${m.email} · ${new Date(m.createdAt).toLocaleString('zh-CN')}</p>
-                            <p class="font-medium mt-1">${m.subject}</p>
-                            <p class="text-gray-600 mt-1">${m.content}</p>
+                            <p class="text-gray-500 text-sm">${esc(m.email)} · ${new Date(m.createdAt).toLocaleString('zh-CN')}</p>
+                            <p class="font-medium mt-1">${esc(m.subject)}</p>
+                            <p class="text-gray-600 mt-1">${esc(m.content)}</p>
                         </div>
                         <div class="flex gap-2 flex-shrink-0">
                             ${!m.isRead ? `<button onclick="markRead(${m.id})" class="text-green-500 hover:text-green-700 text-sm font-medium">标记已读</button>` : ''}
