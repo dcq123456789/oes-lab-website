@@ -9,6 +9,9 @@ const db = require('./server/db');
 
 const PORT = 8080;
 
+// 设为 true 时本地同时服务前台 index.html 方便预览
+const SERVE_FRONTEND = true;
+
 // Auto-generate merged data.json from database (committed to git → cloud deployment)
 function rebuildDataJSON() {
     try {
@@ -245,8 +248,12 @@ const server = http.createServer((req, res) => {
     // ---- Admin static files (admin.html + uploaded images for preview) ----
     const urlPath = req.url.split('?')[0];
 
-    // Serve admin.html at root
-    if (urlPath === '/' || urlPath === '/admin.html') {
+    // Serve admin.html at root (or /admin.html) when SERVE_FRONTEND is off
+    // When SERVE_FRONTEND is on, root serves index.html instead
+    if (urlPath === '/') {
+        return serveFile(res, path.join(__dirname, SERVE_FRONTEND ? 'index.html' : 'admin.html'));
+    }
+    if (urlPath === '/admin.html') {
         return serveFile(res, path.join(__dirname, 'admin.html'));
     }
 
@@ -255,9 +262,17 @@ const server = http.createServer((req, res) => {
         return serveFile(res, path.join(__dirname, urlPath));
     }
 
-    // Everything else: 404 (frontend is on cloud, not served locally)
+    // When SERVE_FRONTEND is on, serve frontend static files
+    if (SERVE_FRONTEND) {
+        const frontendFiles = ['/index.html', '/styles.css', '/src/app.js', '/data/data.json', '/data/messages.json'];
+        if (frontendFiles.indexOf(urlPath) !== -1 || urlPath.startsWith('/image/')) {
+            return serveFile(res, path.join(__dirname, urlPath));
+        }
+    }
+
+    // Everything else: 404
     res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end('<h1>404 - 此前台页面部署在云端</h1>');
+    res.end('<h1>404 - Not Found</h1>');
 });
 
 server.on('error', (err) => {
@@ -282,8 +297,13 @@ server.on('error', (err) => {
         console.log('┌─────────────────────────────────────────────┐');
         console.log('│  OES 管理后台 (本地运行)                      │');
         console.log('│                                             │');
-        console.log(`│  后台:  http://localhost:${PORT}/               │`);
-        console.log('│  前台:  部署在云端 (GitHub Pages / Vercel)     │');
+        if (SERVE_FRONTEND) {
+            console.log(`│  前台:  http://localhost:${PORT}/               │`);
+            console.log(`│  后台:  http://localhost:${PORT}/admin.html     │`);
+        } else {
+            console.log(`│  后台:  http://localhost:${PORT}/               │`);
+            console.log('│  前台:  部署在云端 (GitHub Pages / Vercel)     │');
+        }
         console.log('│                                             │');
         console.log('│  编辑 → 保存 → 推送至 GitHub → 云端自动更新    │');
         console.log('│  按 ESC 退出                                 │');

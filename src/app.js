@@ -60,6 +60,7 @@ function navigate(hash) {
     var path = hash.replace('#/', '').replace('#', '') || 'home';
     var parts = path.split('/');
     if (parts[0] === 'member') {
+        if (!_rendered.members) { renderMemberList(); _rendered.members = true; }
         if (parts[1]) {
             var id = parseInt(parts[1]);
             showPage('member');
@@ -73,6 +74,7 @@ function navigate(hash) {
             document.title = PAGES.member.title;
         }
     } else if (parts[0] === 'news') {
+        if (!_rendered.news) { renderNewsPage(); _rendered.news = true; }
         if (parts[1]) {
             var nid = parseInt(parts[1]);
             showPage('news');
@@ -85,10 +87,16 @@ function navigate(hash) {
             showNewsList();
             document.title = PAGES.news.title;
         }
+    } else if (parts[0] === 'research') {
+        if (!_rendered.research) { renderResearchDetail(); _rendered.research = true; }
+        showPage('research');
+        document.title = PAGES.research.title;
+    } else if (parts[0] === 'publications') {
+        if (!_rendered.publications) { populateYearFilter(); renderPubList(); renderStats(); _rendered.publications = true; }
+        showPage('publications');
+        document.title = PAGES.publications.title;
     } else if (PAGES[parts[0]]) {
         showPage(parts[0]);
-        showMemberList();
-        showNewsList();
         document.title = PAGES[parts[0]].title;
     } else {
         showPage('home');
@@ -273,7 +281,7 @@ function renderHomeResearch() {
     if (!container) return;
     container.innerHTML = directions.map(function (d) {
         var iconHtml = d.image
-            ? '<div style="width:64px;height:64px;border-radius:var(--radius-lg);background-size:cover;background-position:center;background-image:url(\'' + esc(d.image) + '\');margin-bottom:var(--space-md)"></div>'
+            ? '<img src="' + esc(d.image) + '" loading="lazy" width="64" height="64" alt="" style="object-fit:cover;border-radius:var(--radius-lg);margin-bottom:var(--space-md)">'
             : '<div style="width:64px;height:64px;border-radius:var(--radius-lg);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:var(--space-md)">' + esc(d.icon) + '</div>';
         return '<a href="#/research" class="card">' +
             iconHtml +
@@ -290,7 +298,7 @@ function renderResearchDetail() {
     container.innerHTML = directions.map(function (d) {
         var items = d.subItems || [];
         var iconHtml = d.image
-            ? '<div style="width:140px;height:140px;border-radius:var(--radius-xl);background-size:cover;background-position:center;background-image:url(\'' + esc(d.image) + '\')"></div>'
+            ? '<img src="' + esc(d.image) + '" loading="lazy" width="140" height="140" alt="" style="object-fit:cover;border-radius:var(--radius-xl)">'
             : '<div style="width:140px;height:140px;border-radius:var(--radius-xl);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:56px">' + esc(d.icon) + '</div>';
         return '<div class="research-card">' +
             '<div class="research-visual" style="background:' + (d.bgColor || 'var(--bg-card)') + '">' + iconHtml + '</div>' +
