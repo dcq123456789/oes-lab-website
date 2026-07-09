@@ -10,7 +10,7 @@ let SQL = null;
 
 // Table column definitions (column order matters for INSERT)
 const TABLE_COLS = {
-    directions: ['id', 'title', 'icon', 'bgColor', 'description', 'subItems', 'sortOrder', 'image'],
+    directions: ['id', 'title', 'icon', 'bgColor', 'description', 'subItems', 'sortOrder', 'image', 'achievements'],
     members: ['id', 'name', 'role', 'bio', 'email', 'phone', 'category', 'photo', 'sortOrder',
         'resume', 'education', 'experience', 'research'],
     publications: ['id', 'year', 'title', 'authors', 'journal', 'doi', 'volume', 'pages', 'sortOrder'],
@@ -19,7 +19,7 @@ const TABLE_COLS = {
 };
 
 const JSON_COLS = {
-    directions: ['subItems']
+    directions: ['subItems', 'achievements']
 };
 
 // ===== Initialization =====
@@ -46,7 +46,8 @@ async function initDB() {
 function createTables() {
     db.run(`CREATE TABLE IF NOT EXISTS directions (
         id INTEGER PRIMARY KEY, title TEXT, icon TEXT, bgColor TEXT,
-        description TEXT, subItems TEXT, sortOrder INTEGER DEFAULT 0, image TEXT
+        description TEXT, subItems TEXT, sortOrder INTEGER DEFAULT 0, image TEXT,
+        achievements TEXT
     )`);
     db.run(`CREATE TABLE IF NOT EXISTS members (
         id INTEGER PRIMARY KEY, name TEXT, role TEXT, bio TEXT, email TEXT,
@@ -65,6 +66,8 @@ function createTables() {
         id INTEGER PRIMARY KEY, title TEXT, "desc" TEXT, bg TEXT,
         icon TEXT, image TEXT, link TEXT, sortOrder INTEGER DEFAULT 0
     )`);
+    // Migration: add achievements column for existing databases
+    try { db.run(`ALTER TABLE directions ADD COLUMN achievements TEXT`); console.log('[db] Added achievements column'); } catch(e) {}
 }
 
 // ===== Helpers =====

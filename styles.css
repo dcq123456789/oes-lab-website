@@ -14,8 +14,8 @@
             --accent-border: rgba(167,139,250,0.2);
             --glow: rgba(167,139,250,0.15);
 
-            --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-display: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            --font-body: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
 
             --text-hero: clamp(42px,7vw,80px);
             --text-h1: clamp(28px,4vw,44px);
@@ -410,12 +410,12 @@
         .carousel-wrap { position: relative; border-radius: var(--radius-xl); overflow: hidden; border: 1px solid var(--border); background: var(--bg-card); }
 .carousel-track { display: flex; transition: transform 0.5s ease; }
 .carousel-track > * { flex: 0 0 100%; min-width: 0; }
-.carousel-slide { min-height: 360px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: default; }
-        .carousel-bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.carousel-slide { min-height: 360px; position: relative; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; cursor: default; }
+        .carousel-bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; z-index: 0; background:#000; }
 .carousel-linked { cursor: pointer; }
 .carousel-linked:hover { filter: brightness(1.08); }
         .carousel-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); z-index: 1; }
-        .carousel-content { position: relative; z-index: 2; text-align: center; padding: 48px; }
+        .carousel-content { position: relative; z-index: 2; text-align: center; padding: 32px 48px 48px; }
         .carousel-icon { width: 72px; height: 72px; margin: 0 auto 20px; border-radius: var(--radius-lg); background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 36px; }
         .carousel-title { font-family: var(--font-display); font-size: clamp(24px,3vw,36px); font-weight: 700; margin-bottom: var(--space-sm); }
         .carousel-desc { font-size: var(--text-body); opacity: 0.8; max-width: 500px; margin: 0 auto; }

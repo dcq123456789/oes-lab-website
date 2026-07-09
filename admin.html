@@ -178,6 +178,13 @@
                     <textarea id="dir-subitems" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="激光技术&#10;光纤传感&#10;光谱分析"></textarea>
                 </div>
                 <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium text-gray-700">研究成果</label>
+                        <button type="button" onclick="addAchievement()" class="text-xs bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded">+ 添加</button>
+                    </div>
+                    <div id="achievements-list" class="space-y-3"></div>
+                </div>
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">排序</label>
                     <input id="dir-sort" type="number" value="0" class="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
                 </div>
@@ -395,10 +402,10 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">点击跳转链接（可选）</label>
                     <input id="carousel-link" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="如 #news 或 https://...">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-4" id="carousel-style-fields">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">图标字母</label>
-                        <input id="carousel-icon" type="text" maxlength="2" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="O">
+                        <input id="carousel-icon" type="text" maxlength="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="O">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">背景色</label>
@@ -624,14 +631,48 @@
                 document.getElementById('carousel-image-placeholder').classList.add('hidden');
                 document.getElementById('carousel-image-remove').classList.remove('hidden');
                 document.getElementById('carousel-image-url').value = c.image;
+                toggleCarouselStyleFields(false);
             } else {
                 document.getElementById('carousel-image-preview').classList.add('hidden');
                 document.getElementById('carousel-image-placeholder').classList.remove('hidden');
                 document.getElementById('carousel-image-remove').classList.add('hidden');
                 document.getElementById('carousel-image-file').value = '';
                 document.getElementById('carousel-image-url').value = '';
+                toggleCarouselStyleFields(true);
             }
         }
+
+        // 当有图片时，图标字母/背景色/标题变为可选，只留描述必填
+        function toggleCarouselStyleFields(required) {
+            const titleInp = document.getElementById('carousel-title');
+            const iconInput = document.getElementById('carousel-icon');
+            const fieldsBox = document.getElementById('carousel-style-fields');
+            if (required) {
+                titleInp.setAttribute('required', '');
+                iconInput.setAttribute('required', '');
+                fieldsBox.style.opacity = '1';
+            } else {
+                titleInp.removeAttribute('required');
+                iconInput.removeAttribute('required');
+                fieldsBox.style.opacity = '0.4';
+            }
+        }
+
+        // 图片变化时联动
+        const _obsCarouselImg = setInterval(() => {
+            const preview = document.getElementById('carousel-image-preview');
+            if (preview) {
+                const hasImg = !preview.classList.contains('hidden');
+                const fieldsBox = document.getElementById('carousel-style-fields');
+                if (fieldsBox) {
+                    const expected = hasImg ? '0.4' : '1';
+                    if (fieldsBox.style.opacity !== expected) {
+                        toggleCarouselStyleFields(!hasImg);
+                    }
+                }
+            }
+        }, 500);
+        setTimeout(() => clearInterval(_obsCarouselImg), 30000);
 
         function closeCarouselModal() { document.getElementById('carousel-modal').classList.add('hidden'); }
         function editCarousel(id) { openCarouselModal(id); }
@@ -782,6 +823,22 @@
                 document.getElementById('dir-image-file').value = '';
                 document.getElementById('dir-image-url').value = '';
             }
+            // Load existing achievements
+            const achList = document.getElementById('achievements-list');
+            achList.innerHTML = '';
+            const existingAch = d ? (d.achievements || []) : [];
+            existingAch.forEach(ach => {
+                addAchievement();
+                const last = achList.lastElementChild;
+                last.querySelector('.ach-title').value = ach.title || '';
+                last.querySelector('.ach-text').value = ach.text || '';
+                if (ach.image) {
+                    last.querySelector('.ach-preview').src = ach.image;
+                    last.querySelector('.ach-preview').classList.remove('hidden');
+                    last.querySelector('.ach-placeholder').classList.add('hidden');
+                    last.querySelector('.ach-url').value = ach.image;
+                }
+            });
         }
 
         function handleDirImageUpload(event) {
@@ -838,6 +895,78 @@
         function closeDirectionModal() { document.getElementById('direction-modal').classList.add('hidden'); }
         function editDirection(id) { openDirectionModal(id); }
 
+        // ===== Direction Achievements =====
+        function addAchievement() {
+            const list = document.getElementById('achievements-list');
+            const idx = list.children.length;
+            const div = document.createElement('div');
+            div.className = 'border border-gray-200 rounded-lg p-3 relative';
+            div.setAttribute('data-ach-index', idx);
+            div.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg leading-none">&times;</button>
+                <input type="text" placeholder="标题（如：最佳论文奖）" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:ring-2 focus:ring-primary mb-2 ach-title">
+                <textarea placeholder="描述..." rows="2" class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:ring-2 focus:ring-primary resize-none mb-2 ach-text"></textarea>
+                <div class="flex items-center gap-2">
+                    <input type="file" accept="image/*" onchange="handleAchievementImage(this)" class="text-xs text-gray-500 ach-file">
+                    <div class="w-12 h-12 rounded bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <img src="" class="w-full h-full object-cover hidden ach-preview">
+                        <span class="text-gray-300 text-xs ach-placeholder">无图</span>
+                    </div>
+                    <input type="text" placeholder="或 URL" class="flex-1 px-2 py-1 border border-gray-300 rounded text-xs outline-none ach-url">
+                    <button type="button" onclick="applyAchUrl(this)" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded whitespace-nowrap">应用</button>
+                </div>`;
+            list.appendChild(div);
+        }
+
+        function collectAchievements() {
+            const items = [];
+            document.querySelectorAll('#achievements-list [data-ach-index]').forEach(div => {
+                const title = div.querySelector('.ach-title').value.trim();
+                const text = div.querySelector('.ach-text').value.trim();
+                const preview = div.querySelector('.ach-preview');
+                const hasImg = !preview.classList.contains('hidden');
+                const image = hasImg ? toRelPath(preview.src) : '';
+                if (title || text || image) {
+                    items.push({ title, text, image });
+                }
+            });
+            return items;
+        }
+
+        async function handleAchievementImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) { alert('图片不能超过 5MB'); input.value = ''; return; }
+            const reader = new FileReader();
+            const div = input.closest('[data-ach-index]');
+            reader.onload = function(e) {
+                fetch('/api/upload', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: e.target.result, name: file.name })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        div.querySelector('.ach-preview').src = res.url;
+                        div.querySelector('.ach-preview').classList.remove('hidden');
+                        div.querySelector('.ach-placeholder').classList.add('hidden');
+                        div.querySelector('.ach-url').value = res.url;
+                    } else { alert('上传失败: ' + res.error); }
+                })
+                .catch(() => alert('上传失败'));
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function applyAchUrl(btn) {
+            const div = btn.closest('[data-ach-index]');
+            const url = div.querySelector('.ach-url').value.trim();
+            if (!url) return;
+            div.querySelector('.ach-preview').src = url;
+            div.querySelector('.ach-preview').classList.remove('hidden');
+            div.querySelector('.ach-placeholder').classList.add('hidden');
+        }
+
         function saveDirection(e) {
             e.preventDefault();
             const id = document.getElementById('dir-id').value;
@@ -850,6 +979,7 @@
                 image: hasImage ? toRelPath(preview.src) : '',
                 description: document.getElementById('dir-desc').value,
                 subItems: document.getElementById('dir-subitems').value.split('\n').filter(s => s.trim()),
+                achievements: collectAchievements(),
                 sortOrder: parseInt(document.getElementById('dir-sort').value)
             };
             if (id) {

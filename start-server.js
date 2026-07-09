@@ -150,7 +150,7 @@ const server = http.createServer((req, res) => {
                 const base64Data = data.replace(/^data:image\/\w+;base64,/, '');
                 const buf = Buffer.from(base64Data, 'base64');
 
-                if (buf.length <= 20000) {
+                if (buf.length <= 100000) {
                     fs.writeFile(filePath, buf, (err2) => {
                         if (err2) {
                             res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -163,7 +163,7 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                let quality = 80;
+                let quality = 85;
                 const compress = () => {
                     sharp(buf).jpeg({ quality, progressive: true }).toBuffer((err, outBuf) => {
                         if (err) {
@@ -171,7 +171,7 @@ const server = http.createServer((req, res) => {
                             res.end(JSON.stringify({ success: false, error: err.message }));
                             return;
                         }
-                        if (outBuf.length > 20000 && quality > 10) {
+                        if (outBuf.length > 100000 && quality > 40) {
                             quality -= 10;
                             compress();
                             return;

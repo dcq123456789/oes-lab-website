@@ -244,13 +244,14 @@ function renderCarousel() {
         }
         var overlay = item.image ? '<div class="carousel-overlay" style="background:rgba(0,0,0,0.25)"></div>' : '<div class="carousel-overlay" style="background:rgba(0,0,0,0.2)"></div>';
         var clickHandler = item.link ? (item.link.startsWith('#') ? ' onclick="window.location.href=\'' + esc(item.link) + '\'"' : ' onclick="window.open(\'' + esc(item.link) + '\',\'_blank\')"') : '';
+        var descHtml = '<div class="carousel-desc"' + (item.image ? ' style="font-size:clamp(14px,2vw,18px);max-width:600px"' : '') + '>' + esc(item.desc) + '</div>';
         return '<div class="carousel-slide' + (item.link ? ' carousel-linked' : '') + '"' + bgStyle + clickHandler + ' role="group" aria-roledescription="slide" aria-label="' + esc(item.title) + '">' +
             bgImg +
             overlay +
             '<div class="carousel-content">' +
-            '<div class="carousel-icon">' + esc(item.icon) + '</div>' +
-            '<div class="carousel-title">' + esc(item.title) + '</div>' +
-            '<div class="carousel-desc">' + esc(item.desc) + '</div>' +
+            (item.icon ? '<div class="carousel-icon">' + esc(item.icon) + '</div>' : '') +
+            (item.title ? '<div class="carousel-title">' + esc(item.title) + '</div>' : '') +
+            descHtml +
             '</div></div>';
     }).join('');
     dots.innerHTML = items.map(function (_, i) {
@@ -358,9 +359,31 @@ function showResearchDetail(id) {
     var d = directions.find(function (x) { return x.id === id; });
     if (!d) return;
     var items = d.subItems || [];
+    var achievements = d.achievements || [];
     var visual = d.image
         ? '<img src="' + esc(d.image) + '" alt="" style="width:200px;height:200px;object-fit:cover;border-radius:var(--radius-xl);display:block;margin:0 auto var(--space-xl)">'
         : '<div style="width:200px;height:200px;border-radius:var(--radius-xl);background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:80px;color:#fff;margin:0 auto var(--space-xl)">' + esc(d.icon) + '</div>';
+
+    var achievementsHtml = '';
+    if (achievements.length > 0) {
+        achievementsHtml =
+            '<div style="margin-top:var(--space-2xl)">' +
+            '<h2 class="h3" style="margin-bottom:var(--space-lg);padding-bottom:var(--space-sm);border-bottom:2px solid var(--accent-secondary);display:inline-block">研究成果</h2>' +
+            '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-lg);margin-top:var(--space-lg);align-items:stretch">' +
+            achievements.map(function (ach) {
+                var imgHtml = ach.image
+                    ? '<div style="background:#fff;height:280px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"><img src="' + esc(ach.image) + '" alt="" loading="lazy" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block"></div>'
+                    : '';
+                return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column;transition:border-color 0.2s,transform 0.2s" onmouseenter="this.style.borderColor=\'var(--accent-secondary)\';this.style.transform=\'translateY(-2px)\'" onmouseleave="this.style.borderColor=\'var(--border)\';this.style.transform=\'translateY(0)\'">' +
+                    imgHtml +
+                    '<div style="padding:var(--space-md);margin-top:auto">' +
+                    '<h4 style="font-weight:600;margin-bottom:var(--space-xs);text-align:center">' + esc(ach.title || '') + '</h4>' +
+                    '<p style="font-size:var(--text-small);color:var(--fg-muted);line-height:1.5">' + esc(ach.text || '') + '</p>' +
+                    '</div></div>';
+            }).join('') +
+            '</div></div>';
+    }
+
     document.getElementById('research-detail-content').innerHTML =
         visual +
         '<h1 class="h1" style="text-align:center;margin-bottom:var(--space-md)">' + esc(d.title) + '</h1>' +
@@ -375,6 +398,7 @@ function showResearchDetail(id) {
                 '</div>';
         }).join('') +
         '</div>' +
+        achievementsHtml +
         '<a href="#/research" style="display:inline-flex;align-items:center;gap:var(--space-sm);color:var(--accent);font-weight:500;font-size:var(--text-small);margin-top:var(--space-2xl)">← 返回研究方向列表</a>' +
         '</div>';
 }
@@ -684,10 +708,9 @@ async function init() {
         document.getElementById('back-top').classList.toggle('show', window.scrollY > 400);
     });
 
-    // Hide loader after animation completes
-    // Minimum 1.8s for branding, or after data loaded if later
+    // Hide loader after data loaded (min 300ms for flash prevention)
     var elapsed = performance.now();
-    var minDelay = Math.max(0, 1800 - elapsed);
+    var minDelay = Math.max(0, 300 - elapsed);
     setTimeout(function () {
         var loader = document.getElementById('loader');
         if (loader) loader.classList.add('hidden');

@@ -14,12 +14,44 @@
         "PoF (Power-over-Fiber) 技术"
       ],
       "sortOrder": 0,
-      "image": "image/1783410597198.jpg"
+      "image": "image/1783410597198.jpg",
+      "achievements": [
+        {
+          "title": "Laser Power Converter Chip",
+          "text": "",
+          "image": "image/1783490256049.jpg"
+        },
+        {
+          "title": "8xxnm TO-type laser power converter",
+          "text": "",
+          "image": "image/1783490575054.jpg"
+        },
+        {
+          "title": "8xxnm 1W Laser Power Converter",
+          "text": "",
+          "image": "image/1783491428211.jpg"
+        },
+        {
+          "title": "830nm 2W Single-Channel Energy Supplying Laser",
+          "text": "",
+          "image": "image/1783491648377.jpg"
+        },
+        {
+          "title": "830nm 5W Dual-channel Laser for Power Delivery",
+          "text": "",
+          "image": "image/1783491874647.jpg"
+        },
+        {
+          "title": "High-Power Laser Module",
+          "text": "",
+          "image": "image/1783492080813.jpg"
+        }
+      ]
     },
     {
       "id": 2,
       "title": "光声——EFPI传感",
-      "icon": "P",
+      "icon": "",
       "bgColor": "bg-indigo-600",
       "description": "研究基于非本征法布里-珀罗干涉（EFPI）的光纤传感技术，聚焦光声检测、高灵敏度声波传感及结构健康监测等应用。",
       "subItems": [
@@ -30,7 +62,19 @@
         "结构健康监测应用"
       ],
       "sortOrder": 1,
-      "image": "image/1779430698122.jpg"
+      "image": "image/1783569418692.jpg",
+      "achievements": [
+        {
+          "title": "",
+          "text": "",
+          "image": "image/1783515734890.jpg"
+        },
+        {
+          "title": "",
+          "text": "",
+          "image": "image/1783517860720.jpg"
+        }
+      ]
     },
     {
       "id": 3,
@@ -46,13 +90,35 @@
         "金刚石NV色心传感器"
       ],
       "sortOrder": 2,
-      "image": "image/1779430704378.jpg"
+      "image": "image/1783570450562.jpg",
+      "achievements": [
+        {
+          "title": "",
+          "text": "",
+          "image": "image/1783518201157.jpg"
+        },
+        {
+          "title": "",
+          "text": "",
+          "image": "image/1783518205745.jpg"
+        },
+        {
+          "title": "",
+          "text": "",
+          "image": "image/1783518212919.jpg"
+        },
+        {
+          "title": "",
+          "text": "",
+          "image": "image/1783518221734.jpg"
+        }
+      ]
     },
     {
       "id": 4,
       "title": "其它研究方向",
       "icon": "+",
-      "bgColor": "bg-emerald-600",
+      "bgColor": "",
       "description": "围绕光学工程相关领域，开展光电探测、微纳光子器件、光学成像及智能光电系统等交叉前沿研究。",
       "subItems": [
         "高灵敏度光电探测技术",
@@ -62,7 +128,14 @@
         "光纤通信与光网络"
       ],
       "sortOrder": 3,
-      "image": ""
+      "image": "",
+      "achievements": [
+        {
+          "title": "光纤陀螺",
+          "text": "",
+          "image": "image/1783571351705.jpg"
+        }
+      ]
     }
   ],
   "members": [
@@ -220,13 +293,13 @@
   "publications": [
     {
       "id": 1,
-      "year": 2025,
-      "title": "High-Performance Fiber Optic Sensor Based on Novel Interferometric Structure",
-      "authors": "Zhang, L., Wang, H., Liu, W., et al.",
-      "journal": "Nature Photonics, 19(3), 245-256",
+      "year": 2026,
+      "title": "Diamond Nitrogen-Vacancy Center Quantum Sensor with Light Input and Electricity Output for Ultra-High Voltage",
+      "authors": "C. Dong, C. Guan, J Huang, et al",
+      "journal": "Opt. Express",
       "doi": "10.1364/OE.585302",
-      "volume": "",
-      "pages": "",
+      "volume": "34",
+      "pages": "2642-2654",
       "sortOrder": null
     },
     {
@@ -382,33 +455,13 @@
   "carousel": [
     {
       "id": 1,
-      "title": "光学技术前沿研究",
-      "desc": "探索激光、光纤传感与光谱分析的最新突破",
+      "title": " ",
+      "desc": "埋首经年沉淀青云志\n乘风此去纵横天地间",
       "bg": "from-blue-600 to-sky-400",
-      "icon": "O",
-      "image": "",
+      "icon": "",
+      "image": "image/1783566377067.jpg",
       "link": "#research",
       "sortOrder": 0
-    },
-    {
-      "id": 2,
-      "title": "电学技术创新",
-      "desc": "微电子器件与集成电路设计的创新应用",
-      "bg": "from-indigo-600 to-purple-400",
-      "icon": "E",
-      "image": "image/1783416784098.jpg",
-      "link": "",
-      "sortOrder": 1
-    },
-    {
-      "id": 3,
-      "title": "传感技术突破",
-      "desc": "高精度传感器与物联网传感网络的研发",
-      "bg": "from-purple-600 to-pink-400",
-      "icon": "S",
-      "image": "",
-      "link": "",
-      "sortOrder": 2
     },
     {
       "id": 4,
