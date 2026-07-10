@@ -289,7 +289,7 @@ const server = http.createServer((req, res) => {
 
     // When SERVE_FRONTEND is on, serve frontend static files
     if (SERVE_FRONTEND) {
-        const frontendFiles = ['/index.html', '/styles.css', '/src/app.js', '/data/data.json', '/data/messages.json'];
+        const frontendFiles = ['/index.html', '/styles.css', '/src/app.js', '/data/data.json', '/data/messages.json', '/favicon.png'];
         if (frontendFiles.indexOf(urlPath) !== -1 || urlPath.startsWith('/image/')) {
             return serveFile(req, res, path.join(__dirname, urlPath));
         }

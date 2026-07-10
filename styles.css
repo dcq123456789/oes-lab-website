@@ -287,8 +287,8 @@
         .nav-logo { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: var(--tracking-tight); }
         .nav-links { display: flex; gap: var(--space-xl); align-items: center; }
         .nav-link {
-            font-size: 13px; font-weight: 500; color: var(--fg-muted);
-            letter-spacing: 0.04em; text-transform: uppercase;
+            font-size: 16px; font-weight: 700; color: var(--fg-muted);
+            letter-spacing: 0.02em; text-transform: uppercase;
             position: relative; padding: 4px 0;
             transition: color var(--duration-fast);
         }
@@ -314,7 +314,7 @@
         .nav-dropdown:hover .nav-dropdown-menu { display: block; }
         .nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
         .nav-dropdown-menu a {
-            display: block; padding: 8px 20px; font-size: var(--text-small);
+            display: block; padding: 8px 20px; font-size: 13px;
             color: var(--fg-muted); transition: all var(--duration-fast);
         }
         .nav-dropdown-menu a:hover { background: rgba(255,255,255,0.04); color: var(--fg); }
